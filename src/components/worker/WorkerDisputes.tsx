@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import {
   Send,
   CheckCircle2,
@@ -8,7 +8,7 @@ import {
   Scale,
 } from 'lucide-react-native';
 import { Dispute } from '../../types';
-import { TextField } from '../../ui';
+import { Button, Card, EmptyState, Section, TextField, ToneBadge } from '../../ui';
 import {
   AppLanguage,
   mobileTranslations,
@@ -16,12 +16,15 @@ import {
   getLocalizedTrade,
   getLocalizedStatement,
 } from '../../data/mobileTranslations';
+import { colors, radius, spacing, fontSize, roleAccent } from '../../theme';
 
 interface WorkerDisputesProps {
   disputes: Dispute[];
   currentLang?: AppLanguage;
   onWorkerRespond: (disputeId: string, response: string) => void;
 }
+
+const accent = roleAccent.worker;
 
 export const WorkerDisputes: React.FC<WorkerDisputesProps> = ({
   disputes,
@@ -30,7 +33,6 @@ export const WorkerDisputes: React.FC<WorkerDisputesProps> = ({
 }) => {
   const t = mobileTranslations[currentLang];
 
-  // Filter disputes relevant to worker Ramesh Jadhav
   const workerDisputes = disputes.filter(
     (d) =>
       d.workerId === 'w1' ||
@@ -50,46 +52,47 @@ export const WorkerDisputes: React.FC<WorkerDisputesProps> = ({
     setResponseTexts((prev) => ({ ...prev, [disputeId]: '' }));
   };
 
+  const disputeTone = (isResolved: boolean) =>
+    isResolved
+      ? { fg: colors.successFg, bg: colors.successLight }
+      : { fg: colors.warningFg, bg: colors.warningLight };
+
   return (
     <View style={styles.container}>
-      {/* Cooperative Protection Banner */}
-      <View style={styles.banner}>
+      <Card style={styles.banner}>
         <View style={styles.bannerRow}>
-          <Scale size={20} color="#818cf8" />
+          <Scale size={20} color={accent} />
           <Text style={styles.bannerTitle}>{t.worker.disputes.peerPanel}</Text>
         </View>
         <Text style={styles.bannerSubtitle}>{t.worker.disputes.disputesSubtitle}</Text>
-      </View>
+      </Card>
 
-      <View style={styles.list}>
-        <Text style={styles.listHeader}>
-          {t.worker.disputes.disputeCases} ({workerDisputes.length})
-        </Text>
-
+      <Section
+        title={`${t.worker.disputes.disputeCases} (${workerDisputes.length})`}
+      >
         {workerDisputes.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <CheckCircle2 size={40} color="#059669" />
-            <Text style={styles.emptyTitle}>{t.worker.disputes.noActiveDisputes}</Text>
-            <Text style={styles.emptyDesc}>{t.worker.disputes.allClearDesc}</Text>
-          </View>
+          <Card>
+            <EmptyState
+              icon={<CheckCircle2 size={40} color={colors.success} />}
+              title={t.worker.disputes.noActiveDisputes}
+              description={t.worker.disputes.allClearDesc}
+            />
+          </Card>
         ) : (
           workerDisputes.map((dispute) => {
             const isResolved = dispute.status === 'resolved';
 
             return (
-              <View key={dispute.id} style={styles.disputeCard}>
-                {/* Header */}
+              <Card key={dispute.id} style={styles.disputeCard}>
                 <View style={styles.disputeHeaderRow}>
                   <View style={styles.disputeHeaderLeft}>
                     <View style={styles.disputeMetaRow}>
                       <Text style={styles.disputeId}>
                         Dispute #{dispute.id.slice(-6).toUpperCase()}
                       </Text>
-                      <View style={styles.bookingIdBadge}>
-                        <Text style={styles.bookingIdBadgeText}>
-                          Booking #{dispute.bookingId.slice(-6).toUpperCase()}
-                        </Text>
-                      </View>
+                      <Text style={styles.bookingIdBadge}>
+                        Booking #{dispute.bookingId.slice(-6).toUpperCase()}
+                      </Text>
                     </View>
                     <Text style={styles.disputeTitle}>
                       {getLocalizedTrade(dispute.workerTrade, currentLang)} Service
@@ -99,27 +102,15 @@ export const WorkerDisputes: React.FC<WorkerDisputesProps> = ({
                     </Text>
                   </View>
 
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      isResolved ? styles.statusBadgeResolved : styles.statusBadgeOpen,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusBadgeText,
-                        isResolved ? styles.statusBadgeTextResolved : styles.statusBadgeTextOpen,
-                      ]}
-                    >
-                      {getLocalizedStatus(dispute.status, currentLang)}
-                    </Text>
-                  </View>
+                  <ToneBadge
+                    tone={disputeTone(isResolved)}
+                    label={getLocalizedStatus(dispute.status, currentLang)}
+                  />
                 </View>
 
-                {/* Complaint Text - Blockquote without quotes to avoid overflow */}
                 <View style={styles.complaintBox}>
                   <View style={styles.boxLabelRow}>
-                    <AlertCircle size={14} color="#e11d48" />
+                    <AlertCircle size={14} color={colors.error} />
                     <Text style={styles.complaintLabel}>{t.worker.disputes.claimDetails}</Text>
                   </View>
                   <Text style={styles.blockQuoteRose}>
@@ -127,62 +118,57 @@ export const WorkerDisputes: React.FC<WorkerDisputesProps> = ({
                   </Text>
                 </View>
 
-                {/* Existing Worker Response */}
                 {dispute.workerResponse && (
                   <View style={styles.responseBox}>
                     <View style={styles.boxLabelRow}>
-                      <User size={14} color="#3730a3" />
+                      <User size={14} color={colors.blueDark} />
                       <Text style={styles.responseLabel}>{t.worker.disputes.yourStatement}</Text>
                     </View>
-                    <Text style={styles.blockQuoteIndigo}>
+                    <Text style={styles.blockQuoteBlue}>
                       {getLocalizedStatement(dispute.workerResponse, currentLang)}
                     </Text>
                   </View>
                 )}
 
-                {/* Co-op Council Resolution Notes if available */}
                 {dispute.resolutionNotes && (
                   <View style={styles.resolutionBox}>
                     <View style={styles.boxLabelRow}>
-                      <CheckCircle2 size={14} color="#065f46" />
+                      <CheckCircle2 size={14} color={colors.successFg} />
                       <Text style={styles.resolutionLabel}>{t.worker.disputes.peerCouncilRuling}</Text>
                     </View>
-                    <Text style={styles.blockQuoteEmerald}>
+                    <Text style={styles.blockQuoteGreen}>
                       {getLocalizedStatement(dispute.resolutionNotes, currentLang)}
                     </Text>
                   </View>
                 )}
 
-                {/* Reply Form if not yet resolved */}
                 {!isResolved && (
                   <View style={styles.replyForm}>
-                    <Text style={styles.replyLabel}>{t.worker.disputes.provideExplanation}</Text>
                     <TextField
+                      label={t.worker.disputes.provideExplanation}
                       value={responseTexts[dispute.id] || ''}
                       onChangeText={(text) => handleTextChange(dispute.id, text)}
                       placeholder={t.worker.disputes.explanationPlaceholder}
                       multiline
                     />
-                    <Pressable
-                      onPress={() => handleSendResponse(dispute.id)}
+                    <Button
+                      block
+                      color={accent}
                       disabled={!responseTexts[dispute.id]?.trim()}
-                      style={({ pressed }) => [
-                        styles.sendBtn,
-                        !responseTexts[dispute.id]?.trim() && styles.sendBtnDisabled,
-                        pressed && !responseTexts[dispute.id]?.trim() && styles.sendBtnDisabled,
-                        pressed && styles.pressedDim,
-                      ]}
+                      onPress={() => handleSendResponse(dispute.id)}
                     >
-                      <Send size={14} color="#ffffff" />
-                      <Text style={styles.sendBtnText}>{t.worker.disputes.submitResponseBtn}</Text>
-                    </Pressable>
+                      <View style={styles.sendBtnInner}>
+                        <Send size={14} color={colors.white} />
+                        <Text style={styles.sendBtnText}>{t.worker.disputes.submitResponseBtn}</Text>
+                      </View>
+                    </Button>
                   </View>
                 )}
-              </View>
+              </Card>
             );
           })
         )}
-      </View>
+      </Section>
     </View>
   );
 };
@@ -190,86 +176,37 @@ export const WorkerDisputes: React.FC<WorkerDisputesProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: 16,
-    paddingBottom: 80,
+    gap: spacing.lg,
   },
   banner: {
-    backgroundColor: '#0f172a',
-    borderRadius: 16,
-    padding: 16,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    gap: spacing.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: accent,
   },
   bannerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   bannerTitle: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.textPrimary,
   },
   bannerSubtitle: {
-    fontSize: 12,
-    color: '#c7d2fe',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     lineHeight: 20,
   },
-  list: {
-    gap: 12,
-  },
-  listHeader: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#64748b',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    paddingHorizontal: 4,
-  },
-  emptyCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    padding: 32,
-    alignItems: 'center',
-    gap: 8,
-  },
-  emptyTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1e293b',
-    textAlign: 'center',
-  },
-  emptyDesc: {
-    fontSize: 12,
-    color: '#64748b',
-    lineHeight: 18,
-    textAlign: 'center',
-  },
   disputeCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 16,
-    gap: 12,
+    gap: spacing.md,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
   },
   disputeHeaderRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.sm,
   },
   disputeHeaderLeft: {
     flex: 1,
@@ -278,164 +215,121 @@ const styles = StyleSheet.create({
   disputeMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     flexWrap: 'wrap',
   },
   disputeId: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#94a3b8',
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   bookingIdBadge: {
-    backgroundColor: '#eef2ff',
-    paddingHorizontal: 8,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  bookingIdBadgeText: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#4338ca',
+    color: colors.blueDark,
+    backgroundColor: colors.blueLight,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 1,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
   },
   disputeTitle: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#0f172a',
-    marginTop: 4,
+    color: colors.textPrimary,
+    marginTop: spacing.xs,
     flexShrink: 1,
   },
   disputeMeta: {
-    fontSize: 11,
-    color: '#94a3b8',
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
     marginTop: 2,
   },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    flexShrink: 0,
-  },
-  statusBadgeResolved: {
-    backgroundColor: '#d1fae5',
-  },
-  statusBadgeOpen: {
-    backgroundColor: '#fef3c7',
-  },
-  statusBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'capitalize',
-  },
-  statusBadgeTextResolved: {
-    color: '#065f46',
-  },
-  statusBadgeTextOpen: {
-    color: '#92400e',
-  },
   complaintBox: {
-    backgroundColor: '#fff1f2',
+    backgroundColor: colors.errorLight,
     borderWidth: 1,
-    borderColor: '#ffe4e6',
-    borderRadius: 12,
-    padding: 12,
+    borderColor: colors.error,
+    borderRadius: radius.control,
+    padding: spacing.md,
     gap: 6,
   },
   responseBox: {
-    backgroundColor: '#eef2ff',
+    backgroundColor: colors.blueLight,
     borderWidth: 1,
-    borderColor: '#e0e7ff',
-    borderRadius: 12,
-    padding: 12,
+    borderColor: colors.blue,
+    borderRadius: radius.control,
+    padding: spacing.md,
     gap: 6,
   },
   resolutionBox: {
-    backgroundColor: '#ecfdf5',
+    backgroundColor: colors.successLight,
     borderWidth: 1,
-    borderColor: '#a7f3d0',
-    borderRadius: 12,
-    padding: 12,
+    borderColor: colors.success,
+    borderRadius: radius.control,
+    padding: spacing.md,
     gap: 6,
   },
   boxLabelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   complaintLabel: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#9f1239',
+    color: colors.errorFg,
   },
   responseLabel: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#3730a3',
+    color: colors.blueDark,
   },
   resolutionLabel: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#065f46',
+    color: colors.successFg,
   },
   blockQuoteRose: {
-    fontSize: 12,
-    color: '#334155',
+    fontSize: fontSize.xs,
+    color: colors.slate700,
     lineHeight: 18,
     borderLeftWidth: 2,
-    borderLeftColor: '#fda4af',
-    paddingLeft: 10,
+    borderLeftColor: colors.error,
+    paddingLeft: spacing.sm,
   },
-  blockQuoteIndigo: {
-    fontSize: 12,
-    color: '#334155',
+  blockQuoteBlue: {
+    fontSize: fontSize.xs,
+    color: colors.slate700,
     lineHeight: 18,
     borderLeftWidth: 2,
-    borderLeftColor: '#a5b4fc',
-    paddingLeft: 10,
+    borderLeftColor: colors.blue,
+    paddingLeft: spacing.sm,
   },
-  blockQuoteEmerald: {
-    fontSize: 12,
-    color: '#334155',
+  blockQuoteGreen: {
+    fontSize: fontSize.xs,
+    color: colors.slate700,
     lineHeight: 18,
     borderLeftWidth: 2,
-    borderLeftColor: '#34d399',
-    paddingLeft: 10,
+    borderLeftColor: colors.success,
+    paddingLeft: spacing.sm,
   },
   replyForm: {
-    gap: 8,
-    paddingTop: 4,
+    gap: spacing.sm,
+    paddingTop: spacing.xs,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
+    borderTopColor: colors.border,
   },
-  replyLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#334155',
-  },
-  sendBtn: {
+  sendBtnInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 8,
-    backgroundColor: '#4f46e5',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  sendBtnDisabled: {
-    backgroundColor: '#e2e8f0',
   },
   sendBtnText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#ffffff',
-  },
-  pressedDim: {
-    opacity: 0.85,
+    color: colors.white,
   },
 });

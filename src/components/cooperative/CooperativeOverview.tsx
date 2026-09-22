@@ -2,24 +2,23 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Booking, Dispute, Review, DemandForecast, WorkforceAllocation } from '../../types';
 import { mockDemandForecasts, mockWorkforceAllocations } from '../../data/mockAppData';
-import { 
-  Building2, 
-  Users, 
-  Briefcase, 
-  ShieldCheck, 
-  AlertCircle, 
-  Star, 
-  IndianRupee, 
-  ChevronRight, 
-  UserPlus, 
-  Award, 
-  Clock, 
-  Sparkles, 
-  BrainCircuit, 
-  CheckCircle2, 
-  Layers 
+import {
+  Building2,
+  Users,
+  Briefcase,
+  ShieldCheck,
+  AlertCircle,
+  Star,
+  IndianRupee,
+  ChevronRight,
+  UserPlus,
+  Award,
+  Clock,
+  CheckCircle2,
 } from 'lucide-react-native';
 import { AppLanguage, mobileTranslations, getLocalizedTrade } from '../../data/mobileTranslations';
+import { Badge, Card, Segmented, SectionTitle, StatBox, Subtitle, Title, ToneBadge } from '../../ui';
+import { colors, radius, spacing, fontSize, roleAccent } from '../../theme';
 
 interface CooperativeOverviewProps {
   bookings: Booking[];
@@ -30,6 +29,9 @@ interface CooperativeOverviewProps {
   currentLang?: AppLanguage;
 }
 
+const accent = roleAccent.cooperative;
+type OverviewSection = 'overview' | 'ai_forecast';
+
 export const CooperativeOverview: React.FC<CooperativeOverviewProps> = ({
   bookings,
   disputes,
@@ -38,7 +40,7 @@ export const CooperativeOverview: React.FC<CooperativeOverviewProps> = ({
   onOpenAddMember,
   currentLang = 'en'
 }) => {
-  const [activeSection, setActiveSection] = useState<'overview' | 'ai_forecast'>('overview');
+  const [activeSection, setActiveSection] = useState<OverviewSection>('overview');
   const [forecasts, _setForecasts] = useState<DemandForecast[]>(mockDemandForecasts);
   const [allocations, setAllocations] = useState<WorkforceAllocation[]>(mockWorkforceAllocations);
   const [rebalanceToast, setRebalanceToast] = useState<string | null>(null);
@@ -49,7 +51,6 @@ export const CooperativeOverview: React.FC<CooperativeOverviewProps> = ({
   const completedBookings = bookings.filter(b => b.status === 'completed');
   const openDisputesCount = disputes.filter(d => d.status !== 'resolved').length;
 
-  // Dynamic calculation of retained reserve fund
   const dynamicReserveFund = 142800 + completedBookings.reduce((acc, b) => acc + b.coopFund, 0);
 
   const maxRecommended = Math.max(...forecasts.map(f => f.recommendedWorkers), 1);
@@ -62,17 +63,17 @@ export const CooperativeOverview: React.FC<CooperativeOverviewProps> = ({
           assignedWorkersCount: a.assignedWorkersCount + 4,
           utilizationRate: 82,
           status: 'Optimal',
-          suggestedAction: currentLang === 'hi' 
-            ? 'वार्ड 12 से 4 आरक्षित तकनीशियन जुटाए गए। ईटीए <12 मिनट पर स्थिर।' 
-            : currentLang === 'mr' 
-            ? 'वॉर्ड 12 मधून 4 राखीव तंत्रज्ञ तैनात केले. ईटीए <12 मिनिटांवर स्थिर.' 
+          suggestedAction: currentLang === 'hi'
+            ? 'वार्ड 12 से 4 आरक्षित तकनीशियन जुटाए गए। ईटीए <12 मिनट पर स्थिर।'
+            : currentLang === 'mr'
+            ? 'वॉर्ड 12 मधून 4 राखीव तंत्रज्ञ तैनात केले. ईटीए <12 मिनिटांवर स्थिर.'
             : '4 reserve technicians mobilized from Ward 12. ETA stabilized at <12m.'
         };
       }
       return a;
     }));
 
-    const toastMsg = currentLang === 'hi' 
+    const toastMsg = currentLang === 'hi'
       ? 'एआई पुनर्संतुलन प्रेषित: वार्ड 14 में 4 तकनीशियन तैनात किए गए। काम का समान वितरण।'
       : currentLang === 'mr'
       ? 'एआय पुनर्संतुलन पाठवले: वॉर्ड 14 मध्ये 4 तंत्रज्ञ नियुक्त केले. कामाचे समान वाटप.'
@@ -119,76 +120,66 @@ export const CooperativeOverview: React.FC<CooperativeOverviewProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Cooperative Ward Banner */}
-      <View style={styles.banner}>
-        <View style={styles.bannerInner}>
-          <View style={styles.bannerTopRow}>
-            <Text style={styles.bannerBadge}>
-              <Building2 size={14} color="#c4b5fd" /> {t.cooperative.overview.hubWard}
-            </Text>
-            <Text style={styles.bannerRegNumber}>
-              {t.cooperative.overview.regNumber}
-            </Text>
+      <Card style={styles.banner}>
+        <View style={styles.bannerTopRow}>
+          <View style={styles.bannerBadgeRow}>
+            <Building2 size={14} color={accent} />
+            <SectionTitle>{t.cooperative.overview.hubWard}</SectionTitle>
           </View>
-
-          <Text style={styles.bannerTitle}>
-            {t.cooperative.overview.societyName}
-          </Text>
-          <Text style={styles.bannerSubtitle}>
-            {t.cooperative.overview.collectiveSubtitle}
-          </Text>
-
-          <View style={styles.bannerStatsRow}>
-            <View style={styles.bannerStatCell}>
-              <Text style={styles.bannerStatValue}>48</Text>
-              <Text style={styles.bannerStatLabel}>{t.cooperative.overview.memberOwners}</Text>
-            </View>
-            <View style={styles.bannerStatCell}>
-              <Text style={[styles.bannerStatValue, styles.bannerStatValuePurple]}>36</Text>
-              <Text style={[styles.bannerStatLabel, styles.bannerStatLabelPurple]}>{t.cooperative.overview.onActiveDuty}</Text>
-            </View>
-            <View style={styles.bannerStatCell}>
-              <Text style={[styles.bannerStatValue, styles.bannerStatValueAmber]}>4.93★</Text>
-              <Text style={[styles.bannerStatLabel, styles.bannerStatLabelAmber]}>{t.cooperative.overview.wardQuality}</Text>
-            </View>
-          </View>
+          <Badge color={colors.textSecondary} bg={colors.slate100}>
+            {t.cooperative.overview.regNumber}
+          </Badge>
         </View>
-      </View>
 
-      {/* Sub-navigation: Operations vs Smart Demand Allocation */}
-      <View style={styles.tabBar}>
-        <Pressable
-          onPress={() => setActiveSection('overview')}
-          style={[styles.tabButton, activeSection === 'overview' && styles.tabButtonActive]}
-        >
-          <Layers size={14} color="#7c3aed" />
-          <Text style={[styles.tabButtonText, activeSection === 'overview' && styles.tabButtonTextActive]}>
-            {t.cooperative.overview.wardOperations}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setActiveSection('ai_forecast')}
-          style={[styles.tabButton, activeSection === 'ai_forecast' && styles.tabButtonActive]}
-        >
-          <BrainCircuit size={14} color="#9333ea" />
-          <Text style={[styles.tabButtonText, activeSection === 'ai_forecast' && styles.tabButtonTextActive]}>
-            {t.cooperative.overview.smartDemandTab}
-          </Text>
-        </Pressable>
-      </View>
+        <Title style={styles.bannerTitle}>
+          {t.cooperative.overview.societyName}
+        </Title>
+        <Subtitle>
+          {t.cooperative.overview.collectiveSubtitle}
+        </Subtitle>
 
-      {/* SECTION 1: WARD OPERATIONS */}
+        <View style={styles.bannerStatsRow}>
+          <StatBox
+            label={t.cooperative.overview.memberOwners}
+            value="48"
+            color={colors.textPrimary}
+            icon={<Users size={16} color={colors.textPrimary} />}
+          />
+          <StatBox
+            label={t.cooperative.overview.onActiveDuty}
+            value="36"
+            color={accent}
+            icon={<Briefcase size={16} color={accent} />}
+          />
+          <StatBox
+            label={t.cooperative.overview.wardQuality}
+            value="4.93★"
+            color={colors.amber}
+            icon={<Star size={16} color={colors.amber} fill={colors.amber} />}
+          />
+        </View>
+      </Card>
+
+      <Segmented<OverviewSection>
+        options={[
+          { value: 'overview', label: t.cooperative.overview.wardOperations },
+          { value: 'ai_forecast', label: t.cooperative.overview.smartDemandTab },
+        ]}
+        value={activeSection}
+        onChange={setActiveSection}
+        accent={accent}
+      />
+
       {activeSection === 'overview' && (
         <View style={styles.section}>
-          {/* Operational Attention Alerts */}
           {openDisputesCount > 0 && (
             <Pressable
               onPress={() => onNavigateTab('disputes')}
-              style={styles.grievanceAlert}
+              style={({ pressed }) => [styles.grievanceAlert, pressed && styles.pressed]}
             >
               <View style={styles.grievanceAlertLeft}>
                 <View style={styles.grievanceIconWrap}>
-                  <AlertCircle size={20} color="#ffffff" />
+                  <AlertCircle size={20} color={colors.white} />
                 </View>
                 <View style={styles.grievanceTextWrap}>
                   <Text style={styles.grievanceTitle}>
@@ -197,23 +188,22 @@ export const CooperativeOverview: React.FC<CooperativeOverviewProps> = ({
                   <Text style={styles.grievanceDesc}>{t.cooperative.overview.grievanceAlertDesc}</Text>
                 </View>
               </View>
-              <ChevronRight size={16} color="#be123c" />
+              <ChevronRight size={16} color={colors.errorFg} />
             </Pressable>
           )}
 
-          {/* Primary Key Metrics Grid */}
           <View style={styles.metricsRow}>
             <Pressable
               onPress={() => onNavigateTab('bookings')}
-              style={styles.metricCard}
+              style={({ pressed }) => [styles.metricCard, pressed && styles.pressed]}
             >
               <View style={styles.metricHeader}>
                 <Text style={styles.metricLabel}>{t.cooperative.overview.activeJobs}</Text>
-                <Briefcase size={16} color="#059669" />
+                <Briefcase size={16} color={accent} />
               </View>
               <Text style={styles.metricValue}>{activeBookingsCount}</Text>
               <View style={styles.metricFooter}>
-                <Clock size={12} color="#059669" />
+                <Clock size={12} color={accent} />
                 <Text style={styles.metricFooterText}>
                   {t.cooperative.overview.newIncoming.replace('{count}', String(pendingRequestsCount))}
                 </Text>
@@ -222,11 +212,11 @@ export const CooperativeOverview: React.FC<CooperativeOverviewProps> = ({
 
             <Pressable
               onPress={() => onNavigateTab('members')}
-              style={styles.metricCard}
+              style={({ pressed }) => [styles.metricCard, pressed && styles.pressed]}
             >
               <View style={styles.metricHeader}>
                 <Text style={styles.metricLabel}>{t.cooperative.overview.workerOwners}</Text>
-                <Users size={16} color="#4f46e5" />
+                <Users size={16} color={accent} />
               </View>
               <Text style={styles.metricValue}>48</Text>
               <Text style={styles.metricFooterText}>{t.cooperative.overview.democraticVoting}</Text>
@@ -234,40 +224,37 @@ export const CooperativeOverview: React.FC<CooperativeOverviewProps> = ({
           </View>
 
           <View style={styles.metricsRow}>
-            <View style={styles.metricCard}>
+            <Card style={styles.metricCardStatic}>
               <View style={styles.metricHeader}>
                 <Text style={styles.metricLabel}>{t.cooperative.overview.retainedReserve}</Text>
-                <IndianRupee size={16} color="#0d9488" />
+                <IndianRupee size={16} color={colors.emeraldDark} />
               </View>
               <Text style={[styles.metricValue, styles.metricValueEmerald]}>₹{dynamicReserveFund.toLocaleString('en-IN')}</Text>
               <Text style={styles.metricFooterText}>{t.cooperative.overview.coopSocialFund}</Text>
-            </View>
+            </Card>
 
             <Pressable
               onPress={() => onNavigateTab('reviews')}
-              style={styles.metricCard}
+              style={({ pressed }) => [styles.metricCard, pressed && styles.pressed]}
             >
               <View style={styles.metricHeader}>
                 <Text style={styles.metricLabel}>{t.cooperative.overview.reviews}</Text>
-                <Star size={16} color="#f59e0b" />
+                <Star size={16} color={colors.amber} fill={colors.amber} />
               </View>
               <Text style={styles.metricValue}>{reviews.length + 140}</Text>
               <Text style={styles.metricFooterTextPositive}>{t.cooperative.overview.positiveRating}</Text>
             </Pressable>
           </View>
 
-          {/* Quick Governance & Management Actions */}
-          <View style={styles.governanceCard}>
-            <Text style={styles.governanceTitle}>
-              {t.cooperative.overview.cooperativeOperations}
-            </Text>
+          <Card style={styles.governanceCard}>
+            <SectionTitle>{t.cooperative.overview.cooperativeOperations}</SectionTitle>
 
             <View style={styles.governanceRow}>
               <Pressable
                 onPress={onOpenAddMember}
-                style={styles.governanceAction}
+                style={({ pressed }) => [styles.governanceAction, pressed && styles.pressed]}
               >
-                <UserPlus size={16} color="#7c3aed" />
+                <UserPlus size={16} color={accent} />
                 <View style={styles.governanceActionTextWrap}>
                   <Text style={styles.governanceActionTitle}>{t.cooperative.overview.enrollMember}</Text>
                   <Text style={styles.governanceActionDesc}>{t.cooperative.overview.enrollMemberDesc}</Text>
@@ -276,50 +263,46 @@ export const CooperativeOverview: React.FC<CooperativeOverviewProps> = ({
 
               <Pressable
                 onPress={() => onNavigateTab('disputes')}
-                style={styles.governanceAction}
+                style={({ pressed }) => [styles.governanceAction, pressed && styles.pressed]}
               >
-                <ShieldCheck size={16} color="#7c3aed" />
+                <ShieldCheck size={16} color={accent} />
                 <View style={styles.governanceActionTextWrap}>
                   <Text style={styles.governanceActionTitle}>{t.cooperative.overview.peerCouncil}</Text>
                   <Text style={styles.governanceActionDesc}>{t.cooperative.overview.peerCouncilDesc}</Text>
                 </View>
               </Pressable>
             </View>
-          </View>
+          </Card>
         </View>
       )}
 
-      {/* SECTION 2: SMART DEMAND ALLOCATION */}
       {activeSection === 'ai_forecast' && (
         <View style={styles.section}>
-          {/* AI Banner */}
-          <View style={styles.aiBanner}>
+          <Card style={styles.aiBanner}>
             <View style={styles.bannerTopRow}>
-              <Text style={styles.aiBannerBadge}>
-                <Sparkles size={14} color="#a78bfa" /> {t.cooperative.overview.smartSuiteBadge}
-              </Text>
-              <Text style={styles.aiBannerModelBadge}>
+              <Badge color={accent} bg={colors.purpleLight}>
+                {t.cooperative.overview.smartSuiteBadge}
+              </Badge>
+              <Badge color={colors.textSecondary} bg={colors.slate100}>
                 {t.cooperative.overview.predictiveModel}
-              </Text>
+              </Badge>
             </View>
-            <Text style={styles.aiBannerTitle}>{t.cooperative.overview.aiHeadline}</Text>
+            <Title style={styles.aiBannerTitle}>{t.cooperative.overview.aiHeadline}</Title>
             <Text style={styles.aiBannerDesc}>
               {t.cooperative.overview.aiDescription}
             </Text>
-          </View>
+          </Card>
 
-          {/* Rebalance Toast */}
           {rebalanceToast && (
-            <View style={styles.rebalanceToast}>
-              <CheckCircle2 size={16} color="#059669" />
+            <Card style={styles.rebalanceToast}>
+              <CheckCircle2 size={16} color={colors.success} />
               <Text style={styles.rebalanceToastText}>{rebalanceToast}</Text>
-            </View>
+            </Card>
           )}
 
-          {/* Forecast Time Slots */}
-          <View style={styles.forecastCard}>
+          <Card style={styles.forecastCard}>
             <View style={styles.cardHeaderRow}>
-              <Text style={styles.cardTitle}>{t.cooperative.overview.hourlyDemandTitle}</Text>
+              <SectionTitle>{t.cooperative.overview.hourlyDemandTitle}</SectionTitle>
               <Text style={styles.cardAside}>{t.cooperative.overview.next12Hours}</Text>
             </View>
 
@@ -329,31 +312,34 @@ export const CooperativeOverview: React.FC<CooperativeOverviewProps> = ({
                   <View style={styles.forecastTopRow}>
                     <View style={styles.forecastTradeGroup}>
                       <Text style={styles.forecastHour}>{f.hourSlot}</Text>
-                      <Text style={styles.forecastTradeChip}>
+                      <Badge color={colors.slate700} bg={colors.slate100}>
                         {getLocalizedTrade(f.trade, currentLang)}
-                      </Text>
+                      </Badge>
                     </View>
-                    <Text style={[
-                      styles.forecastLevelBadge,
-                      f.expectedDemandLevel === 'Surge Peak' ? styles.levelSurge : styles.levelNormal
-                    ]}>
-                      {f.expectedDemandLevel === 'Surge Peak' 
-                        ? (currentLang === 'hi' ? 'चरम मांग' : currentLang === 'mr' ? 'कमाल मागणी' : 'Surge Peak') 
-                        : (currentLang === 'hi' ? 'सामान्य मांग' : currentLang === 'mr' ? 'सामान्य मागणी' : 'Normal')}
-                    </Text>
+                    <ToneBadge
+                      tone={
+                        f.expectedDemandLevel === 'Surge Peak'
+                          ? { fg: colors.errorFg, bg: colors.errorLight }
+                          : { fg: colors.successFg, bg: colors.successLight }
+                      }
+                      label={
+                        f.expectedDemandLevel === 'Surge Peak'
+                          ? (currentLang === 'hi' ? 'चरम मांग' : currentLang === 'mr' ? 'कमाल मागणी' : 'Surge Peak')
+                          : (currentLang === 'hi' ? 'सामान्य मांग' : currentLang === 'mr' ? 'सामान्य मागणी' : 'Normal')
+                      }
+                    />
                   </View>
 
                   <Text style={styles.forecastReason}>
                     {getLocalizedForecastReason(f.predictedReason)}
                   </Text>
 
-                  {/* AI Forecast Demand Bars */}
                   <View style={styles.forecastBarBlock}>
                     <View style={styles.forecastBarTrack}>
-                      <View style={[styles.forecastBarFillRec, { width: `${(f.recommendedWorkers / maxRecommended) * 100}%` }]} />
+                      <View style={[styles.forecastBarFill, { width: `${(f.recommendedWorkers / maxRecommended) * 100}%`, backgroundColor: accent }]} />
                     </View>
                     <View style={styles.forecastBarTrack}>
-                      <View style={[styles.forecastBarFillActive, { width: `${(f.activeWorkers / maxRecommended) * 100}%` }]} />
+                      <View style={[styles.forecastBarFill, { width: `${(f.activeWorkers / maxRecommended) * 100}%`, backgroundColor: colors.success }]} />
                     </View>
                   </View>
 
@@ -372,15 +358,16 @@ export const CooperativeOverview: React.FC<CooperativeOverviewProps> = ({
                 </View>
               ))}
             </View>
-          </View>
+          </Card>
 
-          {/* Allocation Rebalancing Card */}
-          <View style={styles.forecastCard}>
+          <Card style={styles.forecastCard}>
             <View style={styles.cardHeaderRow}>
-              <Text style={styles.cardTitle}>{t.cooperative.overview.crossWardTitle}</Text>
-              <Pressable onPress={handleSimulateRebalance} style={styles.rebalanceBtn}>
-                <Sparkles size={12} color="#9333ea" />
-                <Text style={styles.cardAside}>{t.cooperative.overview.autoRebalanceBtn}</Text>
+              <SectionTitle>{t.cooperative.overview.crossWardTitle}</SectionTitle>
+              <Pressable
+                onPress={handleSimulateRebalance}
+                style={({ pressed }) => [styles.rebalanceBtn, pressed && styles.pressed]}
+              >
+                <Text style={styles.rebalanceBtnText}>{t.cooperative.overview.autoRebalanceBtn}</Text>
               </Pressable>
             </View>
 
@@ -389,14 +376,18 @@ export const CooperativeOverview: React.FC<CooperativeOverviewProps> = ({
                 <View key={i} style={styles.allocItem}>
                   <View style={styles.forecastTopRow}>
                     <Text style={styles.forecastHour}>{a.ward}</Text>
-                    <Text style={[
-                      styles.forecastLevelBadge,
-                      a.status === 'Optimal' ? styles.levelNormal : styles.levelRebalance
-                    ]}>
-                      {a.status === 'Optimal' 
-                        ? (currentLang === 'hi' ? 'इष्टतम' : currentLang === 'mr' ? 'इष्टतम' : 'Optimal') 
-                        : (currentLang === 'hi' ? 'संतुलित' : currentLang === 'mr' ? 'संतुलित' : a.status)}
-                    </Text>
+                    <ToneBadge
+                      tone={
+                        a.status === 'Optimal'
+                          ? { fg: colors.successFg, bg: colors.successLight }
+                          : { fg: colors.warningFg, bg: colors.warningLight }
+                      }
+                      label={
+                        a.status === 'Optimal'
+                          ? (currentLang === 'hi' ? 'इष्टतम' : currentLang === 'mr' ? 'इष्टतम' : 'Optimal')
+                          : (currentLang === 'hi' ? 'संतुलित' : currentLang === 'mr' ? 'संतुलित' : a.status)
+                      }
+                    />
                   </View>
                   <Text style={styles.allocInfo}>
                     {currentLang === 'hi' ? 'कौशल: ' : currentLang === 'mr' ? 'कौशल्य: ' : 'Trade: '}
@@ -406,28 +397,27 @@ export const CooperativeOverview: React.FC<CooperativeOverviewProps> = ({
                     {t.cooperative.overview.utilization.replace('{rate}', String(a.utilizationRate))}
                   </Text>
                   <View style={styles.utilBarTrack}>
-                    <View style={[styles.utilBarFill, { width: `${a.utilizationRate}%`, backgroundColor: a.status === 'Optimal' ? '#059669' : '#f59e0b' }]} />
+                    <View style={[styles.utilBarFill, { width: `${a.utilizationRate}%`, backgroundColor: a.status === 'Optimal' ? colors.success : colors.warning }]} />
                   </View>
                   <Text style={styles.suggestionBox}>
-                    💡 {getLocalizedAction(a.suggestedAction)}
+                    {getLocalizedAction(a.suggestedAction)}
                   </Text>
                 </View>
               ))}
             </View>
-          </View>
+          </Card>
         </View>
       )}
 
-      {/* Cooperative Principles Card */}
-      <View style={styles.principlesCard}>
+      <Card style={styles.principlesCard}>
         <View style={styles.principlesTitleRow}>
-          <Award size={16} color="#059669" />
+          <Award size={16} color={accent} />
           <Text style={styles.principlesTitle}>{t.cooperative.overview.platformGovTitle}</Text>
         </View>
         <Text style={styles.principlesDesc}>
           {t.cooperative.overview.platformGovDesc}
         </Text>
-      </View>
+      </Card>
     </View>
   );
 };
@@ -435,164 +425,60 @@ export const CooperativeOverview: React.FC<CooperativeOverviewProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: 16,
-    paddingBottom: 80,
+    gap: spacing.lg,
   },
   section: {
-    gap: 16,
+    gap: spacing.lg,
   },
-  // Banner
+  pressed: {
+    opacity: 0.85,
+  },
   banner: {
-    backgroundColor: '#1e1b4b',
-    borderRadius: 16,
-    padding: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  bannerInner: {
-    position: 'relative',
+    borderLeftWidth: 3,
+    borderLeftColor: accent,
   },
   bannerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  bannerBadge: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    color: '#c4b5fd',
+  bannerBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  bannerRegNumber: {
-    fontSize: 10,
-    backgroundColor: 'rgba(91,33,182,0.6)',
-    borderWidth: 1,
-    borderColor: 'rgba(168,85,247,0.4)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    fontWeight: '600',
-    color: '#f3e8ff',
-    overflow: 'hidden',
-  },
   bannerTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#ffffff',
-    marginTop: 8,
-  },
-  bannerSubtitle: {
-    fontSize: 12,
-    color: '#cbd5e1',
-    marginTop: 2,
+    marginTop: spacing.sm,
   },
   bannerStatsRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 16,
-    paddingTop: 12,
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: '#334155',
+    borderTopColor: colors.border,
   },
-  bannerStatCell: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    padding: 8,
-    alignItems: 'center',
-  },
-  bannerStatValue: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#ffffff',
-  },
-  bannerStatValuePurple: {
-    color: '#c4b5fd',
-  },
-  bannerStatValueAmber: {
-    color: '#fbbf24',
-  },
-  bannerStatLabel: {
-    fontSize: 10,
-    color: '#cbd5e1',
-    marginTop: 2,
-  },
-  bannerStatLabelPurple: {
-    color: '#e9d5ff',
-  },
-  bannerStatLabelAmber: {
-    color: '#fde68a',
-  },
-  // Sub-navigation tabs
-  tabBar: {
-    flexDirection: 'row',
-    gap: 8,
-    padding: 4,
-    backgroundColor: 'rgba(226,232,240,0.8)',
-    borderRadius: 12,
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: 6,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  tabButtonActive: {
-    backgroundColor: '#ffffff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  tabButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#475569',
-  },
-  tabButtonTextActive: {
-    color: '#3b0764',
-  },
-  // Grievance alert
   grievanceAlert: {
-    backgroundColor: '#fff1f2',
+    backgroundColor: colors.errorLight,
     borderWidth: 1,
-    borderColor: '#fecdd3',
-    borderRadius: 16,
-    padding: 14,
+    borderColor: colors.error,
+    borderRadius: radius.card,
+    padding: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 1,
   },
   grievanceAlertLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.md,
     flexShrink: 1,
   },
   grievanceIconWrap: {
     width: 32,
     height: 32,
-    borderRadius: 12,
-    backgroundColor: '#e11d48',
+    borderRadius: radius.control,
+    backgroundColor: colors.error,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -600,33 +486,31 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   grievanceTitle: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#881337',
+    color: colors.errorFg,
   },
   grievanceDesc: {
-    fontSize: 11,
-    color: '#be123c',
+    fontSize: fontSize.xs,
+    color: colors.errorFg,
     marginTop: 2,
   },
-  // Metric cards
   metricsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.md,
   },
   metricCard: {
     flex: 1,
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 14,
+    borderColor: colors.border,
+    padding: spacing.md,
     gap: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 1,
+  },
+  metricCardStatic: {
+    flex: 1,
+    gap: 6,
   },
   metricHeader: {
     flexDirection: 'row',
@@ -634,240 +518,134 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   metricLabel: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#64748b',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    color: colors.textSecondary,
     flexShrink: 1,
   },
   metricValue: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#0f172a',
+    fontSize: fontSize.xl,
+    fontWeight: '800',
+    color: colors.textPrimary,
   },
   metricValueEmerald: {
-    color: '#047857',
+    color: colors.emeraldDark,
   },
   metricFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   metricFooterText: {
-    fontSize: 11,
-    color: '#94a3b8',
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
     flexShrink: 1,
   },
   metricFooterTextPositive: {
-    fontSize: 11,
-    color: '#059669',
+    fontSize: fontSize.xs,
+    color: colors.success,
     fontWeight: '600',
   },
-  // Governance actions
   governanceCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 16,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  governanceTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    color: '#64748b',
+    gap: spacing.md,
   },
   governanceRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
   },
   governanceAction: {
     flex: 1,
-    height: 80,
-    padding: 12,
-    backgroundColor: '#f5f3ff',
-    borderRadius: 12,
+    minHeight: 80,
+    padding: spacing.md,
+    backgroundColor: colors.purpleLight,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: '#e9d5ff',
+    borderColor: colors.border,
     justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   governanceActionTextWrap: {
     gap: 2,
   },
   governanceActionTitle: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#4c1d95',
+    color: colors.purpleDark,
   },
   governanceActionDesc: {
-    fontSize: 10,
-    color: '#7c3aed',
+    fontSize: fontSize.xs,
+    color: accent,
   },
-  // AI Banner
   aiBanner: {
-    backgroundColor: '#4c1d95',
-    borderRadius: 16,
-    padding: 16,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  aiBannerBadge: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    color: '#c4b5fd',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  aiBannerModelBadge: {
-    fontSize: 10,
-    backgroundColor: 'rgba(107,33,168,0.8)',
-    borderWidth: 1,
-    borderColor: 'rgba(168,85,247,0.3)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    fontWeight: '600',
-    color: '#ffffff',
-    overflow: 'hidden',
+    gap: spacing.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: accent,
   },
   aiBannerTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#ffffff',
+    fontSize: fontSize.sm,
   },
   aiBannerDesc: {
-    fontSize: 12,
-    color: '#e9d5ff',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     lineHeight: 18,
   },
-  // Rebalance toast
   rebalanceToast: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#ecfdf5',
-    borderWidth: 1,
-    borderColor: '#6ee7b7',
-    borderRadius: 16,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 1,
+    gap: spacing.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.success,
   },
   rebalanceToastText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#064e3b',
+    color: colors.successFg,
     flex: 1,
   },
-  // Forecast / allocation cards
   forecastCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 16,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 1,
+    gap: spacing.md,
   },
   cardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  cardTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    color: '#334155',
+    gap: spacing.sm,
   },
   cardAside: {
-    fontSize: 10,
-    color: '#94a3b8',
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
   },
   forecastList: {
-    gap: 10,
+    gap: spacing.sm,
   },
   forecastItem: {
-    padding: 12,
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
+    padding: spacing.md,
+    backgroundColor: colors.slate50,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: colors.border,
     gap: 6,
   },
   forecastTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.sm,
   },
   forecastTradeGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     flexShrink: 1,
   },
   forecastHour: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#0f172a',
-  },
-  forecastTradeChip: {
-    fontSize: 10,
-    backgroundColor: '#e2e8f0',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    fontWeight: '600',
-    color: '#334155',
-    overflow: 'hidden',
-  },
-  forecastLevelBadge: {
-    fontSize: 10,
-    fontWeight: '700',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    overflow: 'hidden',
-  },
-  levelSurge: {
-    backgroundColor: '#ffe4e6',
-    color: '#9f1239',
-  },
-  levelNormal: {
-    backgroundColor: '#d1fae5',
-    color: '#065f46',
-  },
-  levelRebalance: {
-    backgroundColor: '#fef3c7',
-    color: '#92400e',
+    color: colors.textPrimary,
   },
   forecastReason: {
-    fontSize: 11,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     lineHeight: 15,
   },
   forecastBarBlock: {
@@ -875,102 +653,95 @@ const styles = StyleSheet.create({
   },
   forecastBarTrack: {
     height: 4,
-    borderRadius: 999,
-    backgroundColor: '#e2e8f0',
+    borderRadius: radius.full,
+    backgroundColor: colors.slate200,
     overflow: 'hidden',
   },
-  forecastBarFillRec: {
+  forecastBarFill: {
     height: 4,
-    borderRadius: 999,
-    backgroundColor: '#7c3aed',
-  },
-  forecastBarFillActive: {
-    height: 4,
-    borderRadius: 999,
-    backgroundColor: '#059669',
+    borderRadius: radius.full,
   },
   forecastFootRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    paddingTop: 4,
+    borderTopColor: colors.border,
+    paddingTop: spacing.xs,
   },
   forecastFootText: {
-    fontSize: 11,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     flexShrink: 1,
   },
   forecastShortfall: {
-    fontSize: 11,
-    color: '#dc2626',
+    fontSize: fontSize.xs,
+    color: colors.error,
     fontWeight: '700',
   },
   forecastAdequate: {
-    fontSize: 11,
-    color: '#047857',
+    fontSize: fontSize.xs,
+    color: colors.emeraldDark,
     fontWeight: '700',
   },
   rebalanceBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#f5f3ff',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    borderRadius: radius.control,
+    backgroundColor: colors.purpleLight,
     borderWidth: 1,
-    borderColor: '#e9d5ff',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    borderColor: colors.border,
+    minHeight: 36,
+    justifyContent: 'center',
+  },
+  rebalanceBtnText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    color: colors.purpleDark,
   },
   allocList: {
-    gap: 8,
+    gap: spacing.sm,
   },
   allocItem: {
-    padding: 12,
-    borderRadius: 12,
+    padding: spacing.md,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
-    backgroundColor: '#f8fafc',
-    gap: 4,
+    borderColor: colors.border,
+    backgroundColor: colors.slate50,
+    gap: spacing.xs,
   },
   allocInfo: {
-    fontSize: 11,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   allocInfoBold: {
     fontWeight: '700',
   },
   utilBarTrack: {
     height: 4,
-    borderRadius: 999,
-    backgroundColor: '#f1f5f9',
+    borderRadius: radius.full,
+    backgroundColor: colors.slate100,
     overflow: 'hidden',
   },
   utilBarFill: {
     height: 4,
-    borderRadius: 999,
+    borderRadius: radius.full,
   },
   suggestionBox: {
-    fontSize: 10,
-    color: '#312e81',
-    backgroundColor: 'rgba(238,242,255,0.8)',
+    fontSize: fontSize.xs,
+    color: colors.infoFg,
+    backgroundColor: colors.surface,
     padding: 6,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: '#e0e7ff',
-    marginTop: 4,
+    borderColor: colors.border,
+    marginTop: spacing.xs,
     lineHeight: 15,
   },
-  // Cooperative principles
   principlesCard: {
-    backgroundColor: 'rgba(241,245,249,0.8)',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    gap: 8,
+    gap: spacing.sm,
+    backgroundColor: colors.slate50,
   },
   principlesTitleRow: {
     flexDirection: 'row',
@@ -978,13 +749,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   principlesTitle: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#1e293b',
+    color: colors.slate800,
   },
   principlesDesc: {
-    fontSize: 11,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     lineHeight: 17,
   },
 });

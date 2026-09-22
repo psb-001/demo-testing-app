@@ -9,22 +9,33 @@ import {
   LifeBuoy,
 } from 'lucide-react-native';
 import { AppLanguage, mobileTranslations } from '../../data/mobileTranslations';
-import { AppModal } from '../../ui';
+import { AppModal, Badge, Button, Card, PrimaryButton, Section, SectionTitle, StatBox } from '../../ui';
+import { colors, radius, spacing, fontSize, roleAccent } from '../../theme';
 
 interface WorkerProfileProps {
   onResetData: () => void;
   currentLang?: AppLanguage;
 }
 
+const accent = roleAccent.worker;
+
 export const WorkerProfile: React.FC<WorkerProfileProps> = ({ onResetData, currentLang = 'en' }) => {
   const [isAvailable, setIsAvailable] = useState<boolean>(true);
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
   const t = mobileTranslations[currentLang];
 
+  const activeLabel = currentLang === 'hi' ? 'सक्रिय' : currentLang === 'mr' ? 'सक्रिय' : 'Active';
+
+  const protections =
+    currentLang === 'hi'
+      ? ['₹5,00,000 स्वास्थ्य एवं दुर्घटना सुरक्षा', 'औजार बीमा एवं टूट-फूट कोष', 'लोकतांत्रिक परिषद विवाद सुरक्षा']
+      : currentLang === 'mr'
+      ? ['₹5,00,000 आरोग्य व अपघात संरक्षण', 'साहित्य विमा व नुकसान भरपाई निधी', 'लोकशाही परिषद तक्रार संरक्षण']
+      : ['₹5,00,000 Health & Accident Cover', 'Tool Insurance & Breakage Fund', 'Democratic Council Dispute Protection'];
+
   return (
     <View style={styles.container}>
-      {/* Profile Header Card */}
-      <View style={styles.card}>
+      <Card style={styles.profileCard}>
         <View style={styles.profileHeader}>
           <Image
             source={{
@@ -37,10 +48,9 @@ export const WorkerProfile: React.FC<WorkerProfileProps> = ({ onResetData, curre
               <Text style={styles.name}>
                 {currentLang === 'hi' ? 'रमेश जाधव' : currentLang === 'mr' ? 'रमेश जाधव' : 'Ramesh Jadhav'}
               </Text>
-              <View style={styles.coopOwnerBadge}>
-                <ShieldCheck size={12} color="#059669" />
-                <Text style={styles.coopOwnerBadgeText}>{t.worker.profile.coopOwner}</Text>
-              </View>
+              <Badge color={colors.successFg} bg={colors.successLight}>
+                {t.worker.profile.coopOwner}
+              </Badge>
             </View>
             <Text style={styles.roleText}>
               {currentLang === 'hi'
@@ -53,11 +63,10 @@ export const WorkerProfile: React.FC<WorkerProfileProps> = ({ onResetData, curre
           </View>
         </View>
 
-        {/* Availability Switch */}
         <View style={styles.availabilityBox}>
           <View>
             <View style={styles.availabilityStatusRow}>
-              <View style={[styles.statusDot, isAvailable ? styles.statusDotOn : styles.statusDotOff]} />
+              <View style={[styles.statusDot, { backgroundColor: isAvailable ? colors.success : colors.textMuted }]} />
               <Text style={styles.availabilityStatus}>{t.worker.profile.availabilityStatus}</Text>
             </View>
             <Text style={styles.availabilitySub}>
@@ -65,154 +74,119 @@ export const WorkerProfile: React.FC<WorkerProfileProps> = ({ onResetData, curre
             </Text>
           </View>
 
-          <Pressable onPress={() => setIsAvailable(!isAvailable)} hitSlop={8}>
+          <Pressable
+            onPress={() => setIsAvailable(!isAvailable)}
+            hitSlop={8}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: isAvailable }}
+          >
             {isAvailable ? (
-              <ToggleRight size={36} color="#059669" fill="#d1fae5" />
+              <ToggleRight size={36} color={accent} fill={colors.emeraldLight} />
             ) : (
-              <ToggleLeft size={36} color="#94a3b8" />
+              <ToggleLeft size={36} color={colors.textMuted} />
             )}
           </Pressable>
         </View>
-      </View>
+      </Card>
 
-      {/* Cooperative Membership Details */}
-      <View style={styles.card}>
+      <Card style={styles.membershipCard}>
         <View style={styles.sectionHeader}>
-          <Building2 size={16} color="#059669" />
-          <Text style={styles.sectionHeaderText}>{t.worker.profile.governanceOverview}</Text>
+          <Building2 size={16} color={accent} />
+          <SectionTitle>{t.worker.profile.governanceOverview}</SectionTitle>
         </View>
 
-        <View style={styles.membershipContent}>
-          <View style={styles.societyBox}>
-            <Text style={styles.societyName}>{t.cooperative.overview.societyName}</Text>
-            <Text style={styles.societyReg}>
-              {t.cooperative.overview.regNumber} • {t.worker.profile.wardArea}
+        <View style={styles.societyBox}>
+          <Text style={styles.societyName}>{t.cooperative.overview.societyName}</Text>
+          <Text style={styles.societyReg}>
+            {t.cooperative.overview.regNumber} • {t.worker.profile.wardArea}
+          </Text>
+          <View style={styles.votingRow}>
+            <Text style={styles.votingText}>
+              {currentLang === 'hi'
+                ? 'स्वामित्व मतदान अधिकार: '
+                : currentLang === 'mr'
+                ? 'मालकी मतदान हक्क: '
+                : 'Ownership Voting Rights: '}
+              <Text style={styles.votingStrong}>
+                {currentLang === 'hi'
+                  ? '100 शेयर्स (श्रेणी अ)'
+                  : currentLang === 'mr'
+                  ? '100 शेअर्स (श्रेणी अ)'
+                  : '100 Shares (Tier A)'}
+              </Text>
             </Text>
-            <View style={styles.votingRow}>
-              <Text style={styles.votingText}>
-                {currentLang === 'hi'
-                  ? 'स्वामित्व मतदान अधिकार: '
-                  : currentLang === 'mr'
-                  ? 'मालकी मतदान हक्क: '
-                  : 'Ownership Voting Rights: '}
-                <Text style={styles.votingStrong}>
-                  {currentLang === 'hi'
-                    ? '100 शेयर्स (श्रेणी अ)'
-                    : currentLang === 'mr'
-                    ? '100 शेअर्स (श्रेणी अ)'
-                    : '100 Shares (Tier A)'}
-                </Text>
-              </Text>
-              <Text style={styles.votingText}>
-                {currentLang === 'hi'
-                  ? 'लाभांश हिस्सा: '
-                  : currentLang === 'mr'
-                  ? 'नफा हिस्सा: '
-                  : 'Profit Share: '}
-                <Text style={styles.votingStrong}>
-                  {currentLang === 'hi' ? 'सक्रिय' : currentLang === 'mr' ? 'सक्रिय' : 'Active'}
-                </Text>
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text style={styles.statValueDark}>88.0%</Text>
-              <Text style={styles.statLabel}>{t.worker.profile.directTakeHome}</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statValueEmerald}>₹4,200</Text>
-              <Text style={styles.statLabel}>
-                {currentLang === 'hi'
-                  ? 'Q2 सहकारी लाभांश'
-                  : currentLang === 'mr'
-                  ? 'Q2 सहकारी लाभांश'
-                  : 'Q2 Co-op Dividend'}
-              </Text>
-            </View>
+            <Text style={styles.votingText}>
+              {currentLang === 'hi'
+                ? 'लाभांश हिस्सा: '
+                : currentLang === 'mr'
+                ? 'नफा हिस्सा: '
+                : 'Profit Share: '}
+              <Text style={styles.votingStrong}>{activeLabel}</Text>
+            </Text>
           </View>
         </View>
-      </View>
 
-      {/* Worker Social Protections */}
-      <View style={styles.card}>
+        <View style={styles.statsRow}>
+          <StatBox label={t.worker.profile.directTakeHome} value="88.0%" color={colors.textPrimary} />
+          <StatBox
+            label={
+              currentLang === 'hi'
+                ? 'Q2 सहकारी लाभांश'
+                : currentLang === 'mr'
+                ? 'Q2 सहकारी लाभांश'
+                : 'Q2 Co-op Dividend'
+            }
+            value="₹4,200"
+            color={accent}
+          />
+        </View>
+      </Card>
+
+      <Card style={styles.protectionCard}>
         <View style={styles.sectionHeader}>
-          <ShieldCheck size={16} color="#059669" />
-          <Text style={styles.sectionHeaderText}>{t.worker.profile.welfarePool}</Text>
+          <ShieldCheck size={16} color={accent} />
+          <SectionTitle>{t.worker.profile.welfarePool}</SectionTitle>
         </View>
 
         <View style={styles.protectionList}>
-          <View style={styles.protectionRow}>
-            <View style={styles.protectionLabelWrap}>
-              <CheckCircle size={14} color="#059669" />
-              <Text style={styles.protectionText}>
-                {currentLang === 'hi'
-                  ? '₹5,00,000 स्वास्थ्य एवं दुर्घटना सुरक्षा'
-                  : currentLang === 'mr'
-                  ? '₹5,00,000 आरोग्य व अपघात संरक्षण'
-                  : '₹5,00,000 Health & Accident Cover'}
-              </Text>
+          {protections.map((label) => (
+            <View key={label} style={styles.protectionRow}>
+              <View style={styles.protectionLabelWrap}>
+                <CheckCircle size={14} color={accent} />
+                <Text style={styles.protectionText}>{label}</Text>
+              </View>
+              <Badge color={colors.emeraldDark} bg={colors.emeraldLight}>
+                {activeLabel}
+              </Badge>
             </View>
-            <Text style={styles.activeBadge}>
-              {currentLang === 'hi' ? 'सक्रिय' : currentLang === 'mr' ? 'सक्रिय' : 'Active'}
-            </Text>
-          </View>
-          <View style={styles.protectionRow}>
-            <View style={styles.protectionLabelWrap}>
-              <CheckCircle size={14} color="#059669" />
-              <Text style={styles.protectionText}>
-                {currentLang === 'hi'
-                  ? 'औजार बीमा एवं टूट-फूट कोष'
-                  : currentLang === 'mr'
-                  ? 'साहित्य विमा व नुकसान भरपाई निधी'
-                  : 'Tool Insurance & Breakage Fund'}
-              </Text>
-            </View>
-            <Text style={styles.activeBadge}>
-              {currentLang === 'hi' ? 'सक्रिय' : currentLang === 'mr' ? 'सक्रिय' : 'Active'}
-            </Text>
-          </View>
-          <View style={styles.protectionRow}>
-            <View style={styles.protectionLabelWrap}>
-              <CheckCircle size={14} color="#059669" />
-              <Text style={styles.protectionText}>
-                {currentLang === 'hi'
-                  ? 'लोकतांत्रिक परिषद विवाद सुरक्षा'
-                  : currentLang === 'mr'
-                  ? 'लोकशाही परिषद तक्रार संरक्षण'
-                  : 'Democratic Council Dispute Protection'}
-              </Text>
-            </View>
-            <Text style={styles.activeBadge}>
-              {currentLang === 'hi' ? 'सक्रिय' : currentLang === 'mr' ? 'सक्रिय' : 'Active'}
-            </Text>
-          </View>
+          ))}
         </View>
-      </View>
+      </Card>
 
-      {/* Help & Contact Options */}
-      <View style={styles.helpCard}>
-        <Pressable
+      <Card style={styles.helpCard}>
+        <Button
+          block
+          variant="soft"
+          color={accent}
           onPress={() => setShowHelpModal(true)}
-          style={({ pressed }) => [styles.helpBtn, pressed && styles.pressedDim]}
         >
-          <LifeBuoy size={16} color="#059669" />
-          <Text style={styles.helpBtnText}>
-            {currentLang === 'hi'
-              ? 'वार्ड समन्वयक आपातकालीन हेल्पलाइन'
-              : currentLang === 'mr'
-              ? 'वॉर्ड समन्वयक आपत्कालीन हेल्पलाइन'
-              : 'Ward Dispatcher Emergency Helpline'}
-          </Text>
-        </Pressable>
+          <View style={styles.helpBtnInner}>
+            <LifeBuoy size={16} color={accent} />
+            <Text style={styles.helpBtnText}>
+              {currentLang === 'hi'
+                ? 'वार्ड समन्वयक आपातकालीन हेल्पलाइन'
+                : currentLang === 'mr'
+                ? 'वॉर्ड समन्वयक आपत्कालीन हेल्पलाइन'
+                : 'Ward Dispatcher Emergency Helpline'}
+            </Text>
+          </View>
+        </Button>
 
         <Pressable onPress={onResetData} style={({ pressed }) => [pressed && styles.pressedDim]}>
           <Text style={styles.resetBtnText}>{t.worker.profile.resetAppDemo}</Text>
         </Pressable>
-      </View>
+      </Card>
 
-      {/* Dispatch Help Modal */}
       <AppModal
         visible={showHelpModal}
         onClose={() => setShowHelpModal(false)}
@@ -248,12 +222,11 @@ export const WorkerProfile: React.FC<WorkerProfileProps> = ({ onResetData, curre
               : 'Available 7:00 AM - 10:00 PM Daily'}
           </Text>
         </View>
-        <Pressable
+        <PrimaryButton
+          label={t.common.close}
+          color={colors.slate900}
           onPress={() => setShowHelpModal(false)}
-          style={({ pressed }) => [styles.modalCloseBtn, pressed && styles.pressedDim]}
-        >
-          <Text style={styles.modalCloseBtnText}>{t.common.close}</Text>
-        </Pressable>
+        />
       </AppModal>
     </View>
   );
@@ -262,37 +235,24 @@ export const WorkerProfile: React.FC<WorkerProfileProps> = ({ onResetData, curre
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: 16,
+    gap: spacing.lg,
   },
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 16,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+  profileCard: {
+    gap: spacing.md,
+    borderLeftWidth: 3,
+    borderLeftColor: accent,
   },
   profileHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 14,
+    gap: spacing.md,
   },
   avatar: {
     width: 64,
     height: 64,
-    borderRadius: 16,
+    borderRadius: radius.card,
     borderWidth: 2,
-    borderColor: '#059669',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 1,
+    borderColor: accent,
   },
   profileInfo: {
     flex: 1,
@@ -305,41 +265,27 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   name: {
-    fontSize: 16,
+    fontSize: fontSize.lg,
     fontWeight: '800',
-    color: '#0f172a',
-  },
-  coopOwnerBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    backgroundColor: '#d1fae5',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-  },
-  coopOwnerBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#065f46',
+    color: colors.textPrimary,
   },
   roleText: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     fontWeight: '500',
     marginTop: 2,
   },
   memberIdText: {
-    fontSize: 11,
-    color: '#94a3b8',
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
     marginTop: 2,
   },
   availabilityBox: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: colors.slate50,
+    borderRadius: radius.control,
+    padding: spacing.md,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -352,70 +298,55 @@ const styles = StyleSheet.create({
   statusDot: {
     width: 8,
     height: 8,
-    borderRadius: 999,
-  },
-  statusDotOn: {
-    backgroundColor: '#10b981',
-  },
-  statusDotOff: {
-    backgroundColor: '#94a3b8',
+    borderRadius: radius.full,
   },
   availabilityStatus: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#1e293b',
+    color: colors.slate800,
   },
   availabilitySub: {
-    fontSize: 11,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     marginTop: 2,
+  },
+  membershipCard: {
+    gap: spacing.sm,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  sectionHeaderText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#64748b',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  membershipContent: {
-    gap: 8,
-  },
   societyBox: {
-    backgroundColor: '#ecfdf5',
+    backgroundColor: colors.successLight,
     borderWidth: 1,
-    borderColor: 'rgba(167,243,208,0.6)',
-    borderRadius: 12,
-    padding: 12,
-    gap: 4,
+    borderColor: colors.success,
+    borderRadius: radius.control,
+    padding: spacing.md,
+    gap: spacing.xs,
   },
   societyName: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#022c22',
+    color: colors.textPrimary,
   },
   societyReg: {
-    fontSize: 11,
-    color: '#065f46',
+    fontSize: fontSize.xs,
+    color: colors.successFg,
   },
   votingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    fontSize: 11,
-    color: '#047857',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(167,243,208,0.6)',
-    paddingTop: 8,
-    gap: 8,
+    borderTopColor: colors.success,
+    paddingTop: spacing.sm,
+    gap: spacing.sm,
   },
   votingText: {
-    fontSize: 11,
-    color: '#047857',
+    fontSize: fontSize.xs,
+    color: colors.emeraldDark,
     flexShrink: 1,
   },
   votingStrong: {
@@ -423,47 +354,24 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
   },
-  statBox: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    alignItems: 'center',
-    minWidth: 0,
-  },
-  statValueDark: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0f172a',
-  },
-  statValueEmerald: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#059669',
-  },
-  statLabel: {
-    fontSize: 10,
-    color: '#64748b',
-    marginTop: 2,
-    textAlign: 'center',
+  protectionCard: {
+    gap: spacing.sm,
   },
   protectionList: {
-    gap: 8,
+    gap: spacing.sm,
   },
   protectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 8,
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
+    padding: spacing.sm,
+    backgroundColor: colors.slate50,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
-    gap: 8,
+    borderColor: colors.border,
+    gap: spacing.sm,
   },
   protectionLabelWrap: {
     flexDirection: 'row',
@@ -472,93 +380,58 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   protectionText: {
-    fontSize: 12,
-    color: '#334155',
+    fontSize: fontSize.xs,
+    color: colors.slate700,
     fontWeight: '500',
     flexShrink: 1,
   },
-  activeBadge: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#047857',
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    flexShrink: 0,
-  },
   helpCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 16,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    gap: spacing.sm,
   },
-  helpBtn: {
+  helpBtnInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 10,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
+    gap: spacing.sm,
   },
   helpBtnText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#1e293b',
+    color: accent,
   },
   resetBtnText: {
-    fontSize: 12,
-    color: '#94a3b8',
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
     textAlign: 'center',
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
     fontWeight: '500',
   },
   modalDesc: {
-    fontSize: 12,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     lineHeight: 18,
   },
   officerBox: {
-    backgroundColor: '#f8fafc',
-    padding: 12,
-    borderRadius: 12,
+    backgroundColor: colors.slate50,
+    padding: spacing.md,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    gap: 4,
-    marginTop: 12,
+    borderColor: colors.border,
+    gap: spacing.xs,
+    marginVertical: spacing.md,
   },
   officerName: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#1e293b',
+    color: colors.slate800,
   },
   officerPhone: {
-    fontSize: 12,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   officerHours: {
-    fontSize: 10,
-    color: '#94a3b8',
-  },
-  modalCloseBtn: {
-    backgroundColor: '#0f172a',
-    paddingVertical: 8,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  modalCloseBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#ffffff',
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
   },
   pressedDim: {
     opacity: 0.7,

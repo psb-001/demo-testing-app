@@ -9,6 +9,7 @@ import {
   PlayCircle,
   IndianRupee,
   ChevronRight,
+  Star,
 } from 'lucide-react-native';
 import { Booking, BookingStatus } from '../../types';
 import {
@@ -18,6 +19,8 @@ import {
   getLocalizedSlot,
   getLocalizedTask,
 } from '../../data/mobileTranslations';
+import { Badge, Button, Card, EmptyState, Segmented, StatBox, StatusBadge } from '../../ui';
+import { colors, radius, spacing, fontSize, roleAccent } from '../../theme';
 
 interface WorkerJobsProps {
   bookings: Booking[];
@@ -26,6 +29,9 @@ interface WorkerJobsProps {
   onNavigateTab: (tab: string) => void;
 }
 
+const accent = roleAccent.worker;
+type JobsFilter = 'active' | 'completed' | 'all';
+
 export const WorkerJobs: React.FC<WorkerJobsProps> = ({
   bookings,
   currentLang = 'en',
@@ -33,9 +39,8 @@ export const WorkerJobs: React.FC<WorkerJobsProps> = ({
   onNavigateTab,
 }) => {
   const t = mobileTranslations[currentLang];
-  const [filter, setFilter] = useState<'active' | 'completed' | 'all'>('active');
+  const [filter, setFilter] = useState<JobsFilter>('active');
 
-  // Filter bookings for worker Ramesh Jadhav or general demo
   const workerBookings = bookings.filter(
     (b) =>
       b.workerId === 'w1' ||
@@ -66,36 +71,42 @@ export const WorkerJobs: React.FC<WorkerJobsProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Banner / Shift Header */}
-      <View style={styles.banner}>
+      <Card style={styles.banner}>
         <View style={styles.bannerTopRow}>
           <View style={styles.bannerLeft}>
             <View style={styles.liveDot} />
             <Text style={styles.bannerShiftLabel}>{t.worker.jobs.dutyShiftActive}</Text>
           </View>
-          <Text style={styles.bannerHubBadge}>{t.worker.jobs.wardHub}</Text>
+          <Badge color={accent} bg={colors.emeraldLight}>
+            {t.worker.jobs.wardHub}
+          </Badge>
         </View>
 
         <Text style={styles.workerName}>Ramesh Jadhav</Text>
         <Text style={styles.payoutRateText}>{t.worker.jobs.directPayoutRate}</Text>
 
         <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statValueWhite}>{activeCount}</Text>
-            <Text style={styles.statLabel}>{t.worker.jobs.activeJobs}</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statValueWhite}>₹3,850</Text>
-            <Text style={styles.statLabel}>{t.worker.jobs.todayNet}</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statValueEmerald}>4.94★</Text>
-            <Text style={styles.statLabel}>{t.worker.jobs.qualityScore}</Text>
-          </View>
+          <StatBox
+            label={t.worker.jobs.activeJobs}
+            value={String(activeCount)}
+            color={accent}
+            icon={<Briefcase size={16} color={accent} />}
+          />
+          <StatBox
+            label={t.worker.jobs.todayNet}
+            value="₹3,850"
+            color={accent}
+            icon={<IndianRupee size={16} color={accent} />}
+          />
+          <StatBox
+            label={t.worker.jobs.qualityScore}
+            value="4.94★"
+            color={colors.amber}
+            icon={<Star size={16} color={colors.amber} fill={colors.amber} />}
+          />
         </View>
-      </View>
+      </Card>
 
-      {/* Pending Requests Alert if any */}
       {pendingRequestsCount > 0 && (
         <Pressable
           onPress={() => onNavigateTab('requests')}
@@ -112,45 +123,29 @@ export const WorkerJobs: React.FC<WorkerJobsProps> = ({
           </View>
           <View style={styles.alertRight}>
             <Text style={styles.alertRightText}>{t.worker.jobs.reviewBtn}</Text>
-            <ChevronRight size={16} color="#78350f" />
+            <ChevronRight size={16} color={colors.warningFg} />
           </View>
         </Pressable>
       )}
 
-      {/* Filter Tabs */}
-      <View style={styles.filterRow}>
-        <Pressable
-          onPress={() => setFilter('active')}
-          style={[styles.filterTab, filter === 'active' && styles.filterTabActive]}
-        >
-          <Text style={[styles.filterTabText, filter === 'active' && styles.filterTabTextActive]}>
-            {t.worker.jobs.filterActive} ({activeCount})
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setFilter('completed')}
-          style={[styles.filterTab, filter === 'completed' && styles.filterTabActive]}
-        >
-          <Text style={[styles.filterTabText, filter === 'completed' && styles.filterTabTextActive]}>
-            {t.worker.jobs.filterCompleted}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setFilter('all')}
-          style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
-        >
-          <Text style={[styles.filterTabText, filter === 'all' && styles.filterTabTextActive]}>
-            {t.worker.jobs.filterAll} ({workerBookings.length})
-          </Text>
-        </Pressable>
-      </View>
+      <Segmented<JobsFilter>
+        options={[
+          { value: 'active', label: `${t.worker.jobs.filterActive} (${activeCount})` },
+          { value: 'completed', label: t.worker.jobs.filterCompleted },
+          { value: 'all', label: `${t.worker.jobs.filterAll} (${workerBookings.length})` },
+        ]}
+        value={filter}
+        onChange={setFilter}
+        accent={accent}
+      />
 
-      {/* Job Cards List */}
       {filteredBookings.length === 0 ? (
-        <View style={styles.emptyBox}>
-          <Briefcase size={40} color="#cbd5e1" />
-          <Text style={styles.emptyText}>{t.worker.jobs.emptyJobs}</Text>
-        </View>
+        <Card>
+          <EmptyState
+            icon={<Briefcase size={40} color={colors.slate300} />}
+            title={t.worker.jobs.emptyJobs}
+          />
+        </Card>
       ) : (
         <View style={styles.jobList}>
           {filteredBookings.map((job) => {
@@ -158,33 +153,13 @@ export const WorkerJobs: React.FC<WorkerJobsProps> = ({
             const isInProgress = job.status === 'in_progress';
             const isDone = job.status === 'completed';
 
-            const badgeBg = isInProgress
-              ? '#e0e7ff'
-              : isAccepted
-              ? '#d1fae5'
-              : isDone
-              ? '#f1f5f9'
-              : '#fef3c7';
-            const badgeColor = isInProgress
-              ? '#4338ca'
-              : isAccepted
-              ? '#047857'
-              : isDone
-              ? '#334155'
-              : '#92400e';
-
             return (
-              <View key={job.id} style={styles.jobCard}>
-                {/* Header */}
+              <Card key={job.id} style={styles.jobCard}>
                 <View style={styles.jobHeaderRow}>
                   <View style={styles.jobHeaderLeft}>
                     <View style={styles.jobMetaRow}>
                       <Text style={styles.jobId}>#{job.id.slice(-6).toUpperCase()}</Text>
-                      <View style={[styles.statusBadge, { backgroundColor: badgeBg }]}>
-                        <Text style={[styles.statusBadgeText, { color: badgeColor }]}>
-                          {getLocalizedStatus(job.status, currentLang)}
-                        </Text>
-                      </View>
+                      <StatusBadge status={job.status} label={getLocalizedStatus(job.status, currentLang)} />
                     </View>
                     <Text style={styles.jobTitle}>
                       {getLocalizedTask(job.taskDescription, currentLang)}
@@ -193,14 +168,13 @@ export const WorkerJobs: React.FC<WorkerJobsProps> = ({
 
                   <View style={styles.jobHeaderRight}>
                     <View style={styles.payoutRow}>
-                      <IndianRupee size={14} color="#047857" />
+                      <IndianRupee size={14} color={colors.emeraldDark} />
                       <Text style={styles.payoutValue}>{job.workerPayout}</Text>
                     </View>
                     <Text style={styles.takeHomeLabel}>{t.worker.jobs.yourTakeHome}</Text>
                   </View>
                 </View>
 
-                {/* Customer and Location info */}
                 <View style={styles.infoBox}>
                   <View style={styles.infoRowBetween}>
                     <Text style={styles.customerName}>{job.customerName}</Text>
@@ -208,53 +182,58 @@ export const WorkerJobs: React.FC<WorkerJobsProps> = ({
                       onPress={() => Linking.openURL(`tel:${job.customerPhone}`)}
                       style={({ pressed }) => [styles.callPill, pressed && styles.pressedDim]}
                     >
-                      <Phone size={12} color="#047857" />
+                      <Phone size={12} color={colors.emeraldDark} />
                       <Text style={styles.callPillText}>{t.worker.jobs.customer}</Text>
                     </Pressable>
                   </View>
                   <View style={styles.infoRowStart}>
-                    <MapPin size={14} color="#94a3b8" />
+                    <MapPin size={14} color={colors.textMuted} />
                     <Text style={styles.infoText}>{job.address}</Text>
                   </View>
                   <View style={styles.infoRow}>
-                    <Clock size={14} color="#94a3b8" />
+                    <Clock size={14} color={colors.textMuted} />
                     <Text style={styles.infoText}>{getLocalizedSlot(job.scheduledSlot, currentLang)}</Text>
                   </View>
                 </View>
 
-                {/* Action simulation buttons */}
                 <View style={styles.actionWrap}>
                   {isAccepted && (
-                    <Pressable
+                    <Button
+                      block
+                      color={accent}
                       onPress={() => onUpdateBookingStatus(job.id, 'in_progress')}
-                      style={({ pressed }) => [styles.startBtn, pressed && styles.btnPressed]}
                     >
-                      <PlayCircle size={16} color="#ffffff" />
-                      <Text style={styles.actionBtnText}>{t.worker.jobs.startJobBtn}</Text>
-                    </Pressable>
+                      <View style={styles.actionBtnInner}>
+                        <PlayCircle size={16} color={colors.white} />
+                        <Text style={styles.actionBtnText}>{t.worker.jobs.startJobBtn}</Text>
+                      </View>
+                    </Button>
                   )}
 
                   {isInProgress && (
-                    <Pressable
+                    <Button
+                      block
+                      color={colors.slate900}
                       onPress={() => onUpdateBookingStatus(job.id, 'completed')}
-                      style={({ pressed }) => [styles.completeBtn, pressed && styles.btnPressed]}
                     >
-                      <CheckCircle2 size={16} color="#ffffff" />
-                      <Text style={styles.actionBtnText}>{t.worker.jobs.completeJobBtn}</Text>
-                    </Pressable>
+                      <View style={styles.actionBtnInner}>
+                        <CheckCircle2 size={16} color={colors.white} />
+                        <Text style={styles.actionBtnText}>{t.worker.jobs.completeJobBtn}</Text>
+                      </View>
+                    </Button>
                   )}
 
                   {isDone && (
                     <View style={styles.doneBox}>
                       <View style={styles.doneLeft}>
-                        <CheckCircle2 size={16} color="#059669" />
+                        <CheckCircle2 size={16} color={colors.success} />
                         <Text style={styles.doneBoxText}>{t.worker.jobs.completedBadge}</Text>
                       </View>
                       <Text style={styles.doneBoxAmount}>₹{job.workerPayout}</Text>
                     </View>
                   )}
                 </View>
-              </View>
+              </Card>
             );
           })}
         </View>
@@ -266,18 +245,11 @@ export const WorkerJobs: React.FC<WorkerJobsProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: 16,
+    gap: spacing.lg,
   },
   banner: {
-    backgroundColor: '#065f46',
-    borderRadius: 16,
-    padding: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    borderLeftWidth: 3,
+    borderLeftColor: accent,
   },
   bannerTopRow: {
     flexDirection: 'row',
@@ -287,198 +259,103 @@ const styles = StyleSheet.create({
   bannerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   liveDot: {
     width: 10,
     height: 10,
-    borderRadius: 999,
-    backgroundColor: '#34d399',
+    borderRadius: radius.full,
+    backgroundColor: colors.success,
   },
   bannerShiftLabel: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    color: '#6ee7b7',
-  },
-  bannerHubBadge: {
-    fontSize: 12,
-    backgroundColor: 'rgba(4,120,87,0.6)',
-    borderWidth: 1,
-    borderColor: 'rgba(52,211,153,0.3)',
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 999,
-    color: '#d1fae5',
-    fontWeight: '500',
+    letterSpacing: 0.6,
   },
   workerName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#ffffff',
-    marginTop: 8,
+    fontSize: fontSize.lg,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginTop: spacing.sm,
   },
   payoutRateText: {
-    fontSize: 12,
-    color: '#a7f3d0',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
-    paddingTop: 12,
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(4,120,87,0.6)',
-  },
-  statBox: {
-    flex: 1,
-    backgroundColor: 'rgba(2,44,34,0.4)',
-    borderRadius: 12,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(5,150,105,0.3)',
-    alignItems: 'center',
-    minWidth: 0,
-  },
-  statValueWhite: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#ffffff',
-  },
-  statValueEmerald: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#6ee7b7',
-  },
-  statLabel: {
-    fontSize: 10,
-    color: '#6ee7b7',
-    marginTop: 2,
+    borderTopColor: colors.border,
   },
   alertCard: {
-    backgroundColor: '#fffbeb',
+    backgroundColor: colors.amberLight,
     borderWidth: 1,
-    borderColor: '#fde68a',
-    borderRadius: 16,
-    padding: 14,
+    borderColor: colors.amber,
+    borderRadius: radius.card,
+    padding: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
   },
   alertLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.md,
     flexShrink: 1,
   },
   alertBadge: {
     width: 36,
     height: 36,
-    borderRadius: 12,
-    backgroundColor: '#f59e0b',
+    borderRadius: radius.control,
+    backgroundColor: colors.amber,
     alignItems: 'center',
     justifyContent: 'center',
   },
   alertBadgeText: {
     fontWeight: '700',
-    fontSize: 14,
-    color: '#ffffff',
+    fontSize: fontSize.sm,
+    color: colors.white,
   },
   alertTextWrap: {
     flexShrink: 1,
   },
   alertTitle: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#78350f',
+    color: colors.warningFg,
   },
   alertSubtitle: {
-    fontSize: 11,
-    color: '#b45309',
+    fontSize: fontSize.xs,
+    color: colors.warningFg,
     marginTop: 2,
   },
   alertRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   alertRightText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#78350f',
-  },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 8,
-    padding: 4,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
-  },
-  filterTab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-    borderRadius: 9,
-  },
-  filterTabActive: {
-    backgroundColor: '#ffffff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  filterTabText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  filterTabTextActive: {
-    color: '#0f172a',
-  },
-  emptyBox: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    padding: 32,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#334155',
-    textAlign: 'center',
-    marginTop: 8,
+    color: colors.warningFg,
   },
   jobList: {
-    gap: 12,
+    gap: spacing.md,
   },
   jobCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 16,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    gap: spacing.md,
   },
   jobHeaderRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.sm,
   },
   jobHeaderLeft: {
     flex: 1,
@@ -487,31 +364,21 @@ const styles = StyleSheet.create({
   jobMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     flexWrap: 'wrap',
   },
   jobId: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#94a3b8',
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 1,
-    borderRadius: 999,
-  },
-  statusBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'capitalize',
-  },
   jobTitle: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#1e293b',
-    marginTop: 4,
+    color: colors.slate800,
+    marginTop: spacing.xs,
     lineHeight: 18,
     flexShrink: 1,
   },
@@ -526,20 +393,20 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   payoutValue: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '800',
-    color: '#047857',
+    color: colors.emeraldDark,
   },
   takeHomeLabel: {
-    fontSize: 10,
-    color: '#94a3b8',
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
   },
   infoBox: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 10,
+    backgroundColor: colors.slate50,
+    borderRadius: radius.control,
+    padding: spacing.sm,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: colors.border,
     gap: 6,
   },
   infoRowBetween: {
@@ -548,26 +415,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   customerName: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#1e293b',
+    color: colors.slate800,
     flexShrink: 1,
   },
   callPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 9,
+    gap: spacing.xs,
+    backgroundColor: colors.successLight,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: '#a7f3d0',
+    borderColor: colors.success,
+    minHeight: 32,
   },
   callPillText: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#047857',
+    color: colors.emeraldDark,
   },
   infoRow: {
     flexDirection: 'row',
@@ -581,55 +449,33 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   infoText: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     flexShrink: 1,
   },
   actionWrap: {
-    paddingTop: 4,
+    paddingTop: spacing.xs,
   },
-  startBtn: {
+  actionBtnInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 10,
-    backgroundColor: '#4f46e5',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  completeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    backgroundColor: '#059669',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
   },
   actionBtnText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.white,
   },
   doneBox: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#ecfdf5',
+    backgroundColor: colors.successLight,
     borderWidth: 1,
-    borderColor: '#a7f3d0',
-    borderRadius: 12,
-    padding: 10,
+    borderColor: colors.success,
+    borderRadius: radius.control,
+    padding: spacing.sm,
   },
   doneLeft: {
     flexDirection: 'row',
@@ -637,17 +483,14 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   doneBoxText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '500',
-    color: '#065f46',
+    color: colors.successFg,
   },
   doneBoxAmount: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#065f46',
-  },
-  btnPressed: {
-    opacity: 0.85,
+    color: colors.successFg,
   },
   pressedDim: {
     opacity: 0.7,

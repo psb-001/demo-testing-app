@@ -13,19 +13,22 @@ import {
   IndianRupee,
   Receipt
 } from 'lucide-react-native';
-import { AppModal, Button } from '../../ui';
+import { AppModal, Badge, Button, Card, Title, Subtitle, EmptyState } from '../../ui';
 import {
   AppLanguage,
   mobileTranslations,
   getLocalizedTrade,
   getLocalizedTask
 } from '../../data/mobileTranslations';
+import { colors, radius, spacing, fontSize, roleAccent, cardShadow } from '../../theme';
 
 interface CustomerInvoicesProps {
   invoices: Invoice[];
   currentLang?: AppLanguage;
   onNavigateTab: (tab: string) => void;
 }
+
+const accent = roleAccent.customer;
 
 export const CustomerInvoices: React.FC<CustomerInvoicesProps> = ({
   invoices,
@@ -44,35 +47,36 @@ export const CustomerInvoices: React.FC<CustomerInvoicesProps> = ({
     const g = globalThis as any;
     g.window.addEventListener('keydown', handleKeyDown);
     return () => g.window.removeEventListener('keydown', handleKeyDown);
-     
   }, [isWeb]);
 
   return (
     <View style={styles.root}>
-      {/* Header */}
-      <View style={styles.headerCard}>
+      <Card style={styles.headerCard}>
         <View style={styles.headerRow}>
-          <Receipt size={14} color="#93c5fd" />
-          <Text style={styles.headerTag}>{t.customer.invoices.certifiedReceipts}</Text>
+          <Receipt size={14} color={accent} />
+          <Badge color={accent} bg={colors.blueLight}>
+            {t.customer.invoices.certifiedReceipts}
+          </Badge>
         </View>
-        <Text style={styles.headerTitle}>{t.customer.invoices.headerTitle}</Text>
-        <Text style={styles.headerDesc}>{t.customer.invoices.headerDesc}</Text>
-      </View>
+        <Title style={styles.headerTitle}>{t.customer.invoices.headerTitle}</Title>
+        <Subtitle>{t.customer.invoices.headerDesc}</Subtitle>
+      </Card>
 
-      {/* Invoice List */}
       <View style={styles.invoiceList}>
         {invoices.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <FileText size={32} color="#cbd5e1" />
-            <Text style={styles.emptyTitle}>{t.customer.invoices.emptyTitle}</Text>
-            <Text style={styles.emptyDesc}>{t.customer.invoices.emptyDesc}</Text>
-          </View>
+          <Card>
+            <EmptyState
+              icon={<FileText size={32} color={colors.slate300} />}
+              title={t.customer.invoices.emptyTitle}
+              description={t.customer.invoices.emptyDesc}
+            />
+          </Card>
         ) : (
           invoices.map((inv) => {
             const isPaid = inv.paymentStatus === 'paid';
 
             return (
-              <View key={inv.id} style={styles.invoiceCard}>
+              <Card key={inv.id} style={styles.invoiceCard}>
                 <View style={styles.invoiceTop}>
                   <View style={styles.invoiceLeft}>
                     <Text style={styles.invoiceNumber}>{inv.invoiceNumber}</Text>
@@ -86,18 +90,18 @@ export const CustomerInvoices: React.FC<CustomerInvoicesProps> = ({
 
                   <View style={styles.invoiceRight}>
                     <View style={styles.invoiceAmountRow}>
-                      <IndianRupee size={14} color="#0f172a" />
+                      <IndianRupee size={14} color={colors.textPrimary} />
                       <Text style={styles.invoiceAmount}>{inv.totalAmount}</Text>
                     </View>
-                    <View style={[styles.paymentPill, { backgroundColor: isPaid ? '#d1fae5' : '#fef3c7' }]}>
-                      <Text style={[styles.paymentPillText, { color: isPaid ? '#065f46' : '#92400e' }, styles.capitalize]}>
-                        {inv.paymentStatus}
-                      </Text>
-                    </View>
+                    <Badge
+                      color={isPaid ? colors.successFg : colors.warningFg}
+                      bg={isPaid ? colors.successLight : colors.warningLight}
+                    >
+                      {inv.paymentStatus}
+                    </Badge>
                   </View>
                 </View>
 
-                {/* Co-op Fee Breakdown Strip */}
                 <View style={styles.breakdownStrip}>
                   <View style={styles.breakdownRow}>
                     <Text style={styles.breakdownLabel}>{t.customer.invoices.workerPayout}</Text>
@@ -115,21 +119,20 @@ export const CustomerInvoices: React.FC<CustomerInvoicesProps> = ({
                   </View>
                 </View>
 
-                {/* Action button */}
-                <Pressable
+                <Button
+                  variant="soft"
+                  color={accent}
+                  block
                   onPress={() => setSelectedInvoice(inv)}
-                  style={({ pressed }) => [styles.viewBtn, pressed && styles.pressed]}
                 >
-                  <FileText size={14} color="#1e40af" />
-                  <Text style={styles.viewBtnText}>{t.customer.invoices.viewInvoiceBtn}</Text>
-                </Pressable>
-              </View>
+                  {t.customer.invoices.viewInvoiceBtn}
+                </Button>
+              </Card>
             );
           })
         )}
       </View>
 
-      {/* Invoice Detail Modal */}
       <AppModal
         visible={!!selectedInvoice}
         onClose={() => setSelectedInvoice(null)}
@@ -140,7 +143,6 @@ export const CustomerInvoices: React.FC<CustomerInvoicesProps> = ({
             : ''
         }
       >
-        {/* Cooperative Society Details */}
         <View style={styles.coopBox}>
           <Text style={styles.coopName}>{selectedInvoice?.coopName}</Text>
           <Text style={styles.coopReg}>Govt Society Reg # MH-PUN-COOP-2022-8491</Text>
@@ -149,7 +151,6 @@ export const CustomerInvoices: React.FC<CustomerInvoicesProps> = ({
           )}
         </View>
 
-        {/* Bill To & Worker Details */}
         <View style={styles.billGrid}>
           <View style={styles.billGridItem}>
             <Text style={styles.billLabel}>{t.customer.invoices.billedTo}:</Text>
@@ -165,7 +166,6 @@ export const CustomerInvoices: React.FC<CustomerInvoicesProps> = ({
           </View>
         </View>
 
-        {/* Itemized Line Items */}
         <View style={styles.lineItems}>
           <Text style={styles.lineItemsTitle}>{t.customer.invoices.serviceParticulars}</Text>
           <View style={styles.lineItemsBox}>
@@ -198,7 +198,6 @@ export const CustomerInvoices: React.FC<CustomerInvoicesProps> = ({
           </View>
         </View>
 
-        {/* Payment Meta */}
         <View style={styles.paymentMeta}>
           <View style={styles.paymentMetaRow}>
             <Text style={styles.paymentMetaLabel}>{t.customer.invoices.paymentMode}:</Text>
@@ -210,10 +209,9 @@ export const CustomerInvoices: React.FC<CustomerInvoicesProps> = ({
           </View>
         </View>
 
-        {/* Buttons */}
         <View style={styles.modalBtns}>
           <Button
-            color="#2563eb"
+            color={accent}
             style={styles.modalBtnFlex}
             onPress={() => {
               if (!selectedInvoice) return;
@@ -238,77 +236,29 @@ export const CustomerInvoices: React.FC<CustomerInvoicesProps> = ({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    gap: 16,
-    paddingBottom: 80,
+    gap: spacing.lg,
   },
   pressed: {
     opacity: 0.85,
   },
   headerCard: {
-    backgroundColor: '#1e3a8a',
-    borderRadius: 16,
-    padding: 16,
-    gap: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 2,
+    gap: spacing.xs,
+    borderLeftWidth: 3,
+    borderLeftColor: accent,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-  },
-  headerTag: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#93c5fd',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    gap: spacing.xs,
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#ffffff',
-  },
-  headerDesc: {
-    fontSize: 12,
-    color: '#bfdbfe',
+    fontSize: fontSize.lg,
   },
   invoiceList: {
-    gap: 12,
-  },
-  emptyCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    padding: 32,
-    alignItems: 'center',
-    gap: 8,
-  },
-  emptyTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748b',
-  },
-  emptyDesc: {
-    fontSize: 11,
-    color: '#94a3b8',
+    gap: spacing.md,
   },
   invoiceCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(226,232,240,0.8)',
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
-    gap: 12,
+    gap: spacing.md,
   },
   invoiceTop: {
     flexDirection: 'row',
@@ -318,32 +268,33 @@ const styles = StyleSheet.create({
   invoiceLeft: {
     flex: 1,
     minWidth: 0,
-    paddingRight: 8,
+    paddingRight: spacing.sm,
   },
   invoiceNumber: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#94a3b8',
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   invoiceTask: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.textPrimary,
     marginTop: 2,
   },
   invoiceService: {
-    fontSize: 11,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   invoiceWorker: {
     fontWeight: '700',
-    color: '#1e293b',
+    color: colors.slate800,
   },
   invoiceRight: {
     alignItems: 'flex-end',
+    gap: spacing.xs,
   },
   invoiceAmountRow: {
     flexDirection: 'row',
@@ -351,29 +302,16 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   invoiceAmount: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#0f172a',
-  },
-  paymentPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    marginTop: 4,
-  },
-  paymentPillText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  capitalize: {
-    textTransform: 'capitalize',
+    fontSize: fontSize.sm,
+    fontWeight: '800',
+    color: colors.textPrimary,
   },
   breakdownStrip: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 10,
+    backgroundColor: colors.slate50,
+    borderRadius: radius.control,
+    padding: spacing.sm,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: colors.border,
     gap: 6,
   },
   breakdownRow: {
@@ -382,175 +320,160 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   breakdownRowBordered: {
-    paddingTop: 4,
+    paddingTop: spacing.xs,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(226,232,240,0.6)',
+    borderTopColor: colors.border,
   },
   breakdownLabel: {
-    fontSize: 11,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   breakdownPayout: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#047857',
+    color: colors.emeraldDark,
   },
   breakdownWelfare: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#0f766e',
+    color: colors.emeraldDark,
   },
   breakdownZero: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#065f46',
-  },
-  viewBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    backgroundColor: '#eff6ff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
-  },
-  viewBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#1e40af',
+    color: colors.successFg,
   },
   coopBox: {
-    backgroundColor: 'rgba(236,253,245,0.8)',
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: colors.successLight,
+    borderRadius: radius.control,
+    padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(167,243,208,0.6)',
-    gap: 4,
-    marginBottom: 12,
+    borderColor: colors.border,
+    gap: spacing.xs,
+    marginBottom: spacing.md,
   },
   coopName: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#022c22',
+    color: colors.textPrimary,
   },
   coopReg: {
-    fontSize: 11,
-    color: '#065f46',
+    fontSize: fontSize.xs,
+    color: colors.successFg,
   },
   coopGst: {
-    fontSize: 10,
-    color: '#047857',
+    fontSize: fontSize.xs,
+    color: colors.emeraldDark,
   },
   billGrid: {
     flexDirection: 'row',
-    gap: 8,
-    backgroundColor: '#f8fafc',
-    padding: 12,
-    borderRadius: 12,
+    gap: spacing.sm,
+    backgroundColor: colors.slate50,
+    padding: spacing.md,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
-    marginBottom: 12,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
   },
   billGridItem: {
     flex: 1,
     minWidth: 0,
   },
   billLabel: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#94a3b8',
+    color: colors.textMuted,
     textTransform: 'uppercase',
   },
   billValue: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#1e293b',
+    color: colors.slate800,
+    marginTop: 2,
   },
   billSub: {
-    fontSize: 10,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   lineItems: {
-    gap: 8,
-    marginBottom: 12,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
   lineItemsTitle: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#1e293b',
+    color: colors.slate800,
   },
   lineItemsBox: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    padding: 12,
+    borderColor: colors.border,
+    borderRadius: radius.control,
+    padding: spacing.md,
     gap: 6,
   },
   lineItemRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.sm,
   },
   lineItemLabel: {
-    fontSize: 12,
-    color: '#334155',
+    fontSize: fontSize.xs,
+    color: colors.slate700,
     flexShrink: 1,
   },
   lineItemValue: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.textPrimary,
   },
   lineItemLabelDim: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   lineItemValueDim: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   lineItemLabelTiny: {
-    fontSize: 11,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   lineItemValueTiny: {
-    fontSize: 11,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   lineItemZeroTiny: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#047857',
+    color: colors.emeraldDark,
   },
   lineItemTotalRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 8,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    borderTopColor: colors.border,
   },
   lineItemTotalLabel: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '800',
-    color: '#0f172a',
+    color: colors.textPrimary,
   },
   lineItemTotalValue: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '800',
-    color: '#047857',
+    color: colors.emeraldDark,
   },
   paymentMeta: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 10,
+    backgroundColor: colors.slate50,
+    borderRadius: radius.control,
+    padding: spacing.sm,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
-    gap: 4,
-    marginBottom: 12,
+    borderColor: colors.border,
+    gap: spacing.xs,
+    marginBottom: spacing.md,
   },
   paymentMetaRow: {
     flexDirection: 'row',
@@ -558,32 +481,33 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   paymentMetaLabel: {
-    fontSize: 11,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   paymentMetaValue: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#334155',
+    color: colors.slate700,
   },
   modalBtns: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
   },
   modalBtnFlex: {
     flex: 1,
   },
   closeBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.slate100,
+    borderRadius: radius.control,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 44,
   },
   closeBtnText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#334155',
+    color: colors.slate700,
   },
 });

@@ -1,11 +1,18 @@
 import React, { useEffect } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet, Platform } from 'react-native';
-import { md3 } from '../../theme';
-import { Host, BottomSheet } from '@expo/ui';
-import { X, User, Wrench, Building2, CheckCircle2, Sparkles } from 'lucide-react-native';
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { User, Wrench, Building2, CheckCircle2 } from 'lucide-react-native';
 import { UserRole } from '../../types';
 import { AppLanguage, mobileTranslations } from '../../data/mobileTranslations';
-import { Button } from '../../ui';
+import { AppModal, Badge, Button } from '../../ui';
+import {
+  colors,
+  radius,
+  spacing,
+  fontSize,
+  cardShadow,
+  roleAccent,
+  roleAccentLight,
+} from '../../theme';
 
 interface RoleSelectModalProps {
   isOpen: boolean;
@@ -58,9 +65,6 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
     subtitle: string;
     accountName: string;
     description: string;
-    icon: React.ReactNode;
-    color: string;
-    borderColor: string;
     badge: string;
   }[] = [
     {
@@ -74,9 +78,6 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
           ? 'पूजा शर्मा (कोथरूड, पुणे)'
           : 'Pooja Sharma (Kothrud, Pune)',
       description: t.roleSelect.customerDesc,
-      icon: <User size={24} color={md3.colors.secondary} />,
-      color: md3.colors.secondaryContainer,
-      borderColor: md3.colors.secondary,
       badge:
         currentRole === 'customer'
           ? t.roleSelect.activeBadge
@@ -97,9 +98,6 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
           ? 'रमेश जाधव (मुख्य इलेक्ट्रिशियन)'
           : 'Ramesh Jadhav (Master Electrician)',
       description: t.roleSelect.workerDesc,
-      icon: <Wrench size={24} color={md3.colors.primary} />,
-      color: md3.colors.primaryContainer,
-      borderColor: md3.colors.primary,
       badge:
         currentRole === 'worker'
           ? t.roleSelect.activeBadge
@@ -115,9 +113,6 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
       subtitle: t.roleSelect.coopSub,
       accountName: t.cooperative.overview.societyName,
       description: t.roleSelect.coopDesc,
-      icon: <Building2 size={24} color={md3.colors.tertiary} />,
-      color: md3.colors.tertiaryContainer,
-      borderColor: md3.colors.tertiary,
       badge:
         currentRole === 'cooperative'
           ? t.roleSelect.activeBadge
@@ -129,189 +124,126 @@ export const RoleSelectModal: React.FC<RoleSelectModalProps> = ({
     },
   ];
 
+  const roleIcon = (id: UserRole) => {
+    const c = roleAccent[id];
+    if (id === 'customer') return <User size={24} color={c} />;
+    if (id === 'worker') return <Wrench size={24} color={c} />;
+    return <Building2 size={24} color={c} />;
+  };
+
   return (
-    <Host>
-      <BottomSheet
-        isPresented={isOpen}
-        onDismiss={onClose}
-        containerColor="#ffffff"
-        contentPadding={0}
-      >
-        <View style={styles.sheet}>
-          {/* Modal Header */}
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <View style={styles.headerIconBox}>
-                <Sparkles size={16} color="#5eead4" />
-              </View>
-              <View>
-                <Text style={styles.headerTitle}>{t.roleSelect.title}</Text>
-                <Text style={styles.headerSubtitle}>{t.roleSelect.subtitle}</Text>
-              </View>
-            </View>
-            <Pressable onPress={onClose} style={styles.headerClose}>
-              <X size={20} color="#94a3b8" />
-            </Pressable>
-          </View>
-
-          {/* Demo Guide Callout */}
-          <View style={styles.tip}>
-            <Text style={styles.tipText}>{tipText}</Text>
-          </View>
-
-          {/* Role Cards List */}
-          <ScrollView
-            style={[styles.rolesScroll, { maxHeight: 420 }]}
-            contentContainerStyle={styles.rolesContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {roles.map((r) => {
-              const isSelected = currentRole === r.id;
-              return (
-                <Pressable
-                  key={r.id}
-                  onPress={() => {
-                    onSelectRole(r.id);
-                    onClose();
-                  }}
-                  style={({ pressed }) => [
-                    styles.roleCard,
-                    {
-                      backgroundColor: isSelected ? r.color : '#ffffff',
-                      borderColor: isSelected ? r.borderColor : '#e2e8f0',
-                    },
-                    isSelected && styles.roleCardSelected,
-                    pressed && styles.roleCardPressed,
-                  ]}
-                >
-                  <View style={styles.roleIconBox}>{r.icon}</View>
-
-                  <View style={styles.roleBody}>
-                    <View style={styles.roleTitleRow}>
-                      <Text style={styles.roleTitle} numberOfLines={1}>
-                        {r.title}
-                      </Text>
-                      <Text style={styles.roleBadge} numberOfLines={1}>
-                        {r.badge}
-                      </Text>
-                    </View>
-                    <Text style={styles.roleAccount} numberOfLines={1}>
-                      {r.accountName}
-                    </Text>
-                    <Text style={styles.roleDesc}>{r.description}</Text>
-                  </View>
-
-                  {isSelected && (
-                    <View style={styles.roleCheck}>
-                      <CheckCircle2 size={20} color="#0f766e" />
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-
-          {/* Bottom footer button */}
-          <View style={styles.footer}>
-            <Button
-              color="#0f766e"
-              block
-              onPress={onClose}
-              textStyle={styles.continueText}
-            >
-              {continueBtnText}
-            </Button>
-          </View>
+    <AppModal
+      visible={isOpen}
+      onClose={onClose}
+      title={t.roleSelect.title}
+      subtitle={t.roleSelect.subtitle}
+    >
+      <View style={styles.body}>
+        <View style={styles.tip}>
+          <Text style={styles.tipText}>{tipText}</Text>
         </View>
-      </BottomSheet>
-    </Host>
+
+        {roles.map((r) => {
+          const isSelected = currentRole === r.id;
+          const accent = roleAccent[r.id];
+          return (
+            <Pressable
+              key={r.id}
+              onPress={() => {
+                onSelectRole(r.id);
+                onClose();
+              }}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: isSelected }}
+              style={({ pressed }) => [
+                styles.roleCard,
+                isSelected && {
+                  backgroundColor: roleAccentLight[r.id],
+                  borderColor: accent,
+                },
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={[styles.roleIconBox, isSelected && { backgroundColor: colors.surface }]}>
+                {roleIcon(r.id)}
+              </View>
+
+              <View style={styles.roleBody}>
+                <View style={styles.roleTitleRow}>
+                  <Text style={styles.roleTitle} numberOfLines={1}>
+                    {r.title}
+                  </Text>
+                  <Badge
+                    color={isSelected ? accent : colors.slate600}
+                    bg={isSelected ? colors.surface : colors.slate100}
+                    border
+                  >
+                    {r.badge}
+                  </Badge>
+                </View>
+                <Text style={[styles.roleAccount, { color: accent }]} numberOfLines={1}>
+                  {r.accountName}
+                </Text>
+                <Text style={styles.roleSubtitle} numberOfLines={1}>
+                  {r.subtitle}
+                </Text>
+                <Text style={styles.roleDesc}>{r.description}</Text>
+              </View>
+
+              {isSelected && (
+                <View style={styles.roleCheck}>
+                  <CheckCircle2 size={20} color={accent} />
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
+
+        <Button block color={colors.slate900} onPress={onClose}>
+          {continueBtnText}
+        </Button>
+      </View>
+    </AppModal>
   );
 };
 
 const styles = StyleSheet.create({
-  sheet: {
-    backgroundColor: '#ffffff',
-  },
-  header: {
-    backgroundColor: '#042f2e',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  headerIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 12,
-    backgroundColor: 'rgba(20,184,166,0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(45,212,191,0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#ffffff',
-    lineHeight: 20,
-  },
-  headerSubtitle: {
-    fontSize: 11,
-    color: '#cbd5e1',
-  },
-  headerClose: {
-    padding: 4,
-    borderRadius: 999,
+  body: {
+    gap: spacing.md,
   },
   tip: {
-    padding: 16,
-    backgroundColor: 'rgba(240,253,250,0.7)',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccfbf1',
+    padding: spacing.lg,
+    backgroundColor: colors.slate50,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.card,
   },
   tipText: {
-    fontSize: 12,
-    color: '#042f2e',
-    lineHeight: 18,
-  },
-  rolesScroll: {
-    flexShrink: 1,
-  },
-  rolesContent: {
-    padding: 16,
-    gap: 12,
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    lineHeight: 20,
   },
   roleCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 14,
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 2,
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.card,
+    borderWidth: 1.5,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    ...cardShadow,
   },
-  roleCardSelected: {
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  roleCardPressed: {
+  pressed: {
     opacity: 0.9,
   },
   roleIconBox: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
+    borderRadius: radius.md,
+    backgroundColor: colors.slate50,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -324,52 +256,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 4,
+    gap: spacing.xs,
   },
   roleTitle: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.textPrimary,
     flexShrink: 1,
     minWidth: 0,
   },
-  roleBadge: {
-    fontSize: 10,
-    fontWeight: '700',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    color: '#334155',
-    flexShrink: 0,
-    overflow: 'hidden',
-  },
   roleAccount: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#115e59',
+    fontSize: fontSize.sm,
+    fontWeight: '700',
     marginTop: 2,
   },
+  roleSubtitle: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    marginTop: 1,
+  },
   roleDesc: {
-    fontSize: 11,
-    color: '#475569',
-    marginTop: 4,
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
     lineHeight: 16,
   },
   roleCheck: {
     alignSelf: 'center',
-  },
-  footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-    backgroundColor: '#f8fafc',
-    alignItems: 'flex-end',
-  },
-  continueText: {
-    fontSize: 14,
-    fontWeight: '700',
   },
 });

@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet, Linking } from 'react-native';
 import { Worker } from '../../types';
-import { 
-  UserPlus, 
-  Search, 
-  Phone, 
-  Star, 
-  ShieldCheck, 
+import {
+  UserPlus,
+  Search,
+  Phone,
+  Star,
+  ShieldCheck,
   MapPin
 } from 'lucide-react-native';
-import { Card, TextField, Chip, AppModal } from '../../ui';
+import { Badge, Button, Card, Chip, AppModal, EmptyState, TextField, Title, Subtitle, ToneBadge } from '../../ui';
 import { AppLanguage, mobileTranslations, getLocalizedTrade } from '../../data/mobileTranslations';
+import { colors, radius, spacing, fontSize, roleAccent } from '../../theme';
 
 interface CooperativeMembersProps {
   members: Worker[];
   onAddMember: (newMember: Omit<Worker, 'id'>) => void;
   currentLang?: AppLanguage;
 }
+
+const accent = roleAccent.cooperative;
 
 export const CooperativeMembers: React.FC<CooperativeMembersProps> = ({
   members,
@@ -28,7 +31,6 @@ export const CooperativeMembers: React.FC<CooperativeMembersProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const t = mobileTranslations[currentLang];
 
-  // Form State
   const [name, setName] = useState('');
   const [primaryTrade, setPrimaryTrade] = useState('electrician');
   const [primaryTradeLabel, setPrimaryTradeLabel] = useState('Electrician');
@@ -37,7 +39,7 @@ export const CooperativeMembers: React.FC<CooperativeMembersProps> = ({
   const [baseVisitFee, setBaseVisitFee] = useState(299);
 
   const filteredMembers = members.filter(m => {
-    const matchesSearch = m.name.toLowerCase().includes(search.toLowerCase()) || 
+    const matchesSearch = m.name.toLowerCase().includes(search.toLowerCase()) ||
                           m.locality.toLowerCase().includes(search.toLowerCase());
     const matchesTrade = filterTrade === 'all' || m.primaryTrade.toLowerCase() === filterTrade.toLowerCase();
     return matchesSearch && matchesTrade;
@@ -92,36 +94,33 @@ export const CooperativeMembers: React.FC<CooperativeMembersProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Header & Add Button */}
       <View style={styles.headerRow}>
         <View style={styles.headerTextWrap}>
           <View style={styles.headerTitleRow}>
-            <Text style={styles.headerTitle}>{t.cooperative.members.title}</Text>
-            <Text style={styles.headerCount}>{members.length}</Text>
+            <Title style={styles.headerTitle}>{t.cooperative.members.title}</Title>
+            <Badge color={colors.slate700} bg={colors.slate100}>
+              {members.length}
+            </Badge>
           </View>
-          <Text style={styles.headerSubtitle}>{t.cooperative.members.subtitle}</Text>
+          <Subtitle>{t.cooperative.members.subtitle}</Subtitle>
         </View>
 
-        <Pressable
-          onPress={() => setIsModalOpen(true)}
-          style={styles.enrollBtn}
-        >
-          <UserPlus size={14} color="#ffffff" />
-          <Text style={styles.enrollBtnText}>{t.cooperative.members.enrollWorkerBtn}</Text>
-        </Pressable>
+        <Button color={accent} onPress={() => setIsModalOpen(true)}>
+          <View style={styles.enrollBtnInner}>
+            <UserPlus size={14} color={colors.white} />
+            <Text style={styles.enrollBtnText}>{t.cooperative.members.enrollWorkerBtn}</Text>
+          </View>
+        </Button>
       </View>
 
-      {/* Search and Trade Filter */}
       <View style={styles.searchFilterWrap}>
         <View style={styles.searchWrap}>
-          <View style={styles.searchIconWrap} pointerEvents="none">
-            <Search size={16} color="#94a3b8" />
-          </View>
+          <Search size={16} color={colors.textMuted} />
           <TextField
             value={search}
             onChangeText={setSearch}
             placeholder={t.cooperative.members.searchPlaceholder}
-            inputStyle={styles.searchInput}
+            style={styles.searchField}
           />
         </View>
 
@@ -131,75 +130,91 @@ export const CooperativeMembers: React.FC<CooperativeMembersProps> = ({
               key={tradeKey}
               label={getLocalizedTrade(tradeKey, currentLang)}
               selected={filterTrade === tradeKey}
-              color="#7c3aed"
+              color={accent}
               onPress={() => setFilterTrade(tradeKey)}
             />
           ))}
         </ScrollView>
       </View>
 
-      {/* Member Cards */}
       <View style={styles.memberList}>
-        {filteredMembers.map((member) => (
-          <Card key={member.id} style={styles.memberCard}>
-            <View style={styles.memberTop}>
-              <View style={styles.avatarBlock}>
-                <Text style={styles.avatarText}>{member.name.charAt(0).toUpperCase()}</Text>
-              </View>
-              <View style={styles.memberInfo}>
-                <View style={styles.memberNameRow}>
-                  <Text style={styles.memberName} numberOfLines={1}>{member.name}</Text>
-                  <Text style={[
-                    styles.availabilityBadge,
-                    member.availability === 'available' ? styles.availabilityOn : styles.availabilityOff
-                  ]}>
-                    {member.availability === 'available' ? t.cooperative.members.activeShift : t.cooperative.members.offShift}
-                  </Text>
-                </View>
-
-                <Text style={styles.memberTrade}>
-                  {getLocalizedTrade(member.primaryTrade, currentLang)}
-                </Text>
-
-                <View style={styles.memberMetaRow}>
-                  <Text style={styles.memberRating}>
-                    <Star size={12} color="#f59e0b" fill="#f59e0b" />
-                    {' '}{member.rating} ({member.reviewsCount})
-                  </Text>
-                  <Text style={styles.memberMetaDot}>•</Text>
-                  <Text style={styles.memberJobs}>{t.cooperative.members.jobsDone.replace('{count}', String(member.completedJobs))}</Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.memberDetailStrip}>
-              <View style={styles.localityGroup}>
-                <MapPin size={14} color="#94a3b8" />
-                <Text style={styles.localityText}>{member.locality}</Text>
-              </View>
-              <View style={styles.feeGroup}>
-                <Text style={styles.baseVisitLabel}>{t.cooperative.members.baseVisit}</Text>
-                <Text style={styles.baseVisitValue}>₹{member.baseVisitFee}</Text>
-              </View>
-            </View>
-
-            <View style={styles.memberBottomRow}>
-              <Text style={styles.shareholderText}>
-                <ShieldCheck size={14} color="#059669" /> {t.cooperative.members.equalShareholder}
-              </Text>
-              {member.phone && (
-                <Pressable onPress={() => Linking.openURL(`tel:${member.phone}`)}>
-                  <Text style={styles.callText}>
-                    <Phone size={12} color="#334155" /> {currentLang === 'hi' ? 'कॉल करें' : currentLang === 'mr' ? 'कॉल करा' : 'Call Member'}
-                  </Text>
-                </Pressable>
-              )}
-            </View>
+        {filteredMembers.length === 0 ? (
+          <Card>
+            <EmptyState
+              icon={<Search size={32} color={colors.slate300} />}
+              title={t.cooperative.members.searchPlaceholder}
+            />
           </Card>
-        ))}
+        ) : (
+          filteredMembers.map((member) => (
+            <Card key={member.id} style={styles.memberCard}>
+              <View style={styles.memberTop}>
+                <View style={styles.avatarBlock}>
+                  <Text style={styles.avatarText}>{member.name.charAt(0).toUpperCase()}</Text>
+                </View>
+                <View style={styles.memberInfo}>
+                  <View style={styles.memberNameRow}>
+                    <Text style={styles.memberName} numberOfLines={1}>{member.name}</Text>
+                    <ToneBadge
+                      tone={
+                        member.availability === 'available'
+                          ? { fg: colors.successFg, bg: colors.successLight }
+                          : { fg: colors.neutralFg, bg: colors.slate100 }
+                      }
+                      label={member.availability === 'available' ? t.cooperative.members.activeShift : t.cooperative.members.offShift}
+                    />
+                  </View>
+
+                  <Text style={styles.memberTrade}>
+                    {getLocalizedTrade(member.primaryTrade, currentLang)}
+                  </Text>
+
+                  <View style={styles.memberMetaRow}>
+                    <View style={styles.ratingRow}>
+                      <Star size={12} color={colors.amber} fill={colors.amber} />
+                      <Text style={styles.memberRating}>{member.rating} ({member.reviewsCount})</Text>
+                    </View>
+                    <Text style={styles.memberMetaDot}>•</Text>
+                    <Text style={styles.memberJobs}>{t.cooperative.members.jobsDone.replace('{count}', String(member.completedJobs))}</Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.memberDetailStrip}>
+                <View style={styles.localityGroup}>
+                  <MapPin size={14} color={colors.textMuted} />
+                  <Text style={styles.localityText}>{member.locality}</Text>
+                </View>
+                <View style={styles.feeGroup}>
+                  <Text style={styles.baseVisitLabel}>{t.cooperative.members.baseVisit}</Text>
+                  <Text style={styles.baseVisitValue}>₹{member.baseVisitFee}</Text>
+                </View>
+              </View>
+
+              <View style={styles.memberBottomRow}>
+                <View style={styles.shareholderRow}>
+                  <ShieldCheck size={14} color={colors.success} />
+                  <Text style={styles.shareholderText}>
+                    {t.cooperative.members.equalShareholder}
+                  </Text>
+                </View>
+                {member.phone && (
+                  <Pressable
+                    onPress={() => Linking.openURL(`tel:${member.phone}`)}
+                    style={({ pressed }) => [styles.callBtn, pressed && styles.pressed]}
+                  >
+                    <Phone size={12} color={colors.slate700} />
+                    <Text style={styles.callText}>
+                      {currentLang === 'hi' ? 'कॉल करें' : currentLang === 'mr' ? 'कॉल करा' : 'Call Member'}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            </Card>
+          ))
+        )}
       </View>
 
-      {/* Enroll Member Modal */}
       <AppModal
         visible={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -221,7 +236,7 @@ export const CooperativeMembers: React.FC<CooperativeMembersProps> = ({
                   key={opt.key}
                   label={opt.label}
                   selected={primaryTrade === opt.key}
-                  color="#059669"
+                  color={accent}
                   onPress={() => {
                     setPrimaryTrade(opt.key);
                     setPrimaryTradeLabel(labelMap[opt.key] || 'Specialist');
@@ -262,18 +277,21 @@ export const CooperativeMembers: React.FC<CooperativeMembersProps> = ({
           </View>
 
           <View style={styles.modalActions}>
-            <Pressable
+            <Button
+              variant="outline"
+              color={colors.slate700}
+              style={styles.modalActionFlex}
               onPress={() => setIsModalOpen(false)}
-              style={styles.cancelBtn}
             >
-              <Text style={styles.cancelBtnText}>{t.cooperative.members.cancelBtn}</Text>
-            </Pressable>
-            <Pressable
+              {t.cooperative.members.cancelBtn}
+            </Button>
+            <Button
+              color={accent}
+              style={styles.modalActionFlex}
               onPress={handleSubmitNewMember}
-              style={styles.confirmBtn}
             >
-              <Text style={styles.confirmBtnText}>{t.cooperative.members.confirmBtn}</Text>
-            </Pressable>
+              {t.cooperative.members.confirmBtn}
+            </Button>
           </View>
         </View>
       </AppModal>
@@ -284,13 +302,16 @@ export const CooperativeMembers: React.FC<CooperativeMembersProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: 16,
+    gap: spacing.lg,
+  },
+  pressed: {
+    opacity: 0.85,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.sm,
   },
   headerTextWrap: {
     flexShrink: 1,
@@ -301,91 +322,59 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   headerTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0f172a',
+    fontSize: fontSize.sm,
   },
-  headerCount: {
-    fontSize: 12,
-    backgroundColor: '#f1f5f9',
-    color: '#334155',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    fontWeight: '700',
-    overflow: 'hidden',
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: '#64748b',
-    marginTop: 2,
-  },
-  enrollBtn: {
+  enrollBtnInner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#7c3aed',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
   },
   enrollBtnText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.white,
   },
   searchFilterWrap: {
-    gap: 8,
+    gap: spacing.sm,
   },
   searchWrap: {
-    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
-  searchIconWrap: {
-    position: 'absolute',
-    left: 12,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  searchInput: {
-    paddingLeft: 36,
+  searchField: {
+    flex: 1,
   },
   filterChips: {
     gap: 6,
-    paddingBottom: 4,
+    paddingBottom: spacing.xs,
   },
   memberList: {
-    gap: 12,
+    gap: spacing.md,
   },
   memberCard: {
-    padding: 14,
-    gap: 10,
+    padding: spacing.md,
+    gap: spacing.sm,
   },
   memberTop: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
+    gap: spacing.md,
   },
   avatarBlock: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f3e8ff',
+    borderColor: colors.border,
+    backgroundColor: colors.purpleLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize: 18,
+    fontSize: fontSize.lg,
     fontWeight: '700',
-    color: '#7c3aed',
+    color: accent,
   },
   memberInfo: {
     flex: 1,
@@ -398,64 +387,51 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   memberName: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.textPrimary,
     flexShrink: 1,
   },
-  availabilityBadge: {
-    fontSize: 10,
-    fontWeight: '700',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    overflow: 'hidden',
-  },
-  availabilityOn: {
-    backgroundColor: '#d1fae5',
-    color: '#065f46',
-  },
-  availabilityOff: {
-    backgroundColor: '#f1f5f9',
-    color: '#475569',
-  },
   memberTrade: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     fontWeight: '500',
     marginTop: 2,
   },
   memberMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 4,
+    gap: spacing.sm,
+    marginTop: spacing.xs,
   },
-  memberRating: {
-    fontSize: 12,
-    color: '#d97706',
-    fontWeight: '700',
+  ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 2,
+  },
+  memberRating: {
+    fontSize: fontSize.xs,
+    color: colors.warningFg,
+    fontWeight: '700',
   },
   memberMetaDot: {
-    fontSize: 12,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   memberJobs: {
-    fontSize: 12,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   memberDetailStrip: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 8,
+    backgroundColor: colors.slate50,
+    borderRadius: radius.control,
+    padding: spacing.sm,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
-    gap: 8,
+    borderColor: colors.border,
+    gap: spacing.sm,
   },
   localityGroup: {
     flexDirection: 'row',
@@ -464,56 +440,64 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   localityText: {
-    fontSize: 12,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     flexShrink: 1,
   },
   feeGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   baseVisitLabel: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#1e293b',
+    color: colors.slate800,
   },
   baseVisitValue: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#047857',
+    color: colors.emeraldDark,
   },
   memberBottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 4,
+    paddingTop: spacing.xs,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-    gap: 8,
+    borderTopColor: colors.border,
+    gap: spacing.sm,
   },
-  shareholderText: {
-    fontSize: 11,
-    color: '#047857',
-    fontWeight: '500',
+  shareholderRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.xs,
     flexShrink: 1,
   },
-  callText: {
-    fontSize: 11,
-    color: '#334155',
-    fontWeight: '700',
+  shareholderText: {
+    fontSize: fontSize.xs,
+    color: colors.emeraldDark,
+    fontWeight: '500',
+    flexShrink: 1,
+  },
+  callBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.xs,
+    minHeight: 32,
+  },
+  callText: {
+    fontSize: fontSize.xs,
+    color: colors.slate700,
+    fontWeight: '700',
   },
   modalForm: {
-    gap: 12,
+    gap: spacing.md,
   },
   fieldLabel: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.textPrimary,
     marginBottom: 6,
   },
   tradeChips: {
@@ -522,60 +506,34 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tradeChip: {
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   modalFieldRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
   },
   modalFieldHalf: {
     flex: 1,
     minWidth: 0,
   },
   shareNotice: {
-    backgroundColor: '#f5f3ff',
-    padding: 10,
-    borderRadius: 12,
+    backgroundColor: colors.purpleLight,
+    padding: spacing.sm,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: '#e9d5ff',
+    borderColor: colors.border,
   },
   shareNoticeText: {
-    fontSize: 11,
-    color: '#581c87',
+    fontSize: fontSize.xs,
+    color: colors.purpleDark,
     lineHeight: 16,
   },
   modalActions: {
     flexDirection: 'row',
-    gap: 8,
-    paddingTop: 8,
+    gap: spacing.sm,
+    paddingTop: spacing.sm,
   },
-  cancelBtn: {
+  modalActionFlex: {
     flex: 1,
-    paddingVertical: 8,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  cancelBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#334155',
-  },
-  confirmBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    backgroundColor: '#7c3aed',
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  confirmBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#ffffff',
   },
 });

@@ -2,6 +2,7 @@
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { Globe, Check, ChevronDown } from 'lucide-react-native';
 import { Language } from '../../types';
+import { colors, radius, spacing, fontSize, containerShadow } from '../../theme';
 
 interface LanguageSelectorProps {
   currentLang: Language;
@@ -44,15 +45,16 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
     <View style={styles.root} ref={dropdownRef}>
       <Pressable
         onPress={() => setIsOpen(!isOpen)}
+        accessibilityRole="button"
         style={({ pressed }) => [styles.trigger, pressed && styles.pressed]}
       >
-        <Globe size={14} color="#0d9488" />
+        <Globe size={14} color={colors.emerald} />
         <Text style={styles.triggerText}>
           {compact ? activeLang.short : `${activeLang.native}`}
         </Text>
         <ChevronDown
           size={12}
-          color="#64748b"
+          color={colors.textSecondary}
           style={isOpen ? styles.chevronOpen : undefined}
         />
       </Pressable>
@@ -83,7 +85,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                   </Text>
                   <Text style={styles.langLabel}>{lang.label}</Text>
                 </View>
-                {isSelected && <Check size={14} color="#0d9488" />}
+                {isSelected && <Check size={14} color={colors.emerald} />}
               </Pressable>
             );
           })}
@@ -104,17 +106,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
     paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: '#f1f5f9',
+    borderRadius: radius.full,
+    backgroundColor: colors.slate100,
     borderWidth: 1,
-    borderColor: 'rgba(226,232,240,0.8)',
+    borderColor: colors.border,
+    minHeight: 32,
   },
   triggerText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#1e293b',
+    color: colors.slate800,
   },
   chevronOpen: {
     transform: [{ rotate: '180deg' }],
@@ -126,55 +129,52 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '100%',
     right: 0,
-    marginTop: 8,
+    marginTop: spacing.sm,
     width: 176,
-    borderRadius: 16,
-    backgroundColor: '#ffffff',
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-    paddingVertical: 8,
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 12,
+    borderColor: colors.border,
+    paddingVertical: spacing.sm,
+    ...containerShadow,
   },
   menuHeader: {
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
     paddingVertical: 6,
   },
   menuHeaderText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#94a3b8',
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.6,
   },
   langOption: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.control,
+    minHeight: 44,
   },
   langOptionSelected: {
-    backgroundColor: '#f0fdfa',
+    backgroundColor: colors.emeraldLight,
   },
   langLabels: {
     flexDirection: 'column',
   },
   langNative: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '500',
-    color: '#334155',
+    color: colors.slate700,
   },
   langNativeSelected: {
-    color: '#115e59',
-    fontWeight: '600',
+    color: colors.emeraldDark,
+    fontWeight: '700',
   },
   langLabel: {
-    fontSize: 10,
-    color: '#94a3b8',
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
   },
 });

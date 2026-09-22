@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import type { BookingStatus, UserRole } from './types';
 
 export const colors = {
   // surfaces
@@ -9,7 +10,7 @@ export const colors = {
   textPrimary: '#0f172a',
   textSecondary: '#64748b',
   textMuted: '#94a3b8',
-  // role brands (customer=emerald, worker=blue, cooperative=purple)
+  // brand
   primary: '#059669',
   primaryDark: '#047857',
   primaryLight: '#d1fae5',
@@ -19,7 +20,6 @@ export const colors = {
   purple: '#7c3aed',
   purpleDark: '#6d28d9',
   purpleLight: '#ede9fe',
-  // brand support
   emerald: '#059669',
   emeraldDark: '#047857',
   emeraldLight: '#d1fae5',
@@ -34,6 +34,12 @@ export const colors = {
   errorLight: '#fee2e2',
   info: '#2563eb',
   infoLight: '#dbeafe',
+  // status text partners (AA on light tints)
+  successFg: '#065f46',
+  warningFg: '#92400e',
+  errorFg: '#991b1b',
+  infoFg: '#1e40af',
+  neutralFg: '#334155',
   // slate scale
   slate900: '#0f172a',
   slate800: '#1e293b',
@@ -48,6 +54,8 @@ export const colors = {
   // mono
   white: '#ffffff',
   black: '#000000',
+  // overlay (non-hex rgba lives here so screens stay literal-free)
+  overlay: 'rgba(15,23,42,0.7)',
 } as const;
 
 export const spacing = {
@@ -61,19 +69,27 @@ export const spacing = {
 
 export const radius = {
   sm: 8,
+  control: 10,
   md: 12,
+  card: 14,
   lg: 16,
-  xl: 20,
+  sheet: 20,
+  xl: 24,
   full: 999,
 } as const;
 
 export const fontSize = {
   xs: 11,
-  sm: 12,
-  base: 14,
-  lg: 16,
-  xl: 18,
-  '2xl': 22,
+  sm: 13,
+  base: 15,
+  lg: 18,
+  xl: 24,
+} as const;
+
+export const fontWeight = {
+  medium: '500',
+  bold: '700',
+  heavy: '800',
 } as const;
 
 export const font = {
@@ -86,25 +102,60 @@ export const font = {
 
 export const cardShadow = {
   shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.06,
-  shadowRadius: 6,
-  elevation: 2,
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.05,
+  shadowRadius: 4,
+  elevation: 1,
 } as const;
 
 export const containerShadow = {
   shadowColor: '#0f172a',
-  shadowOffset: { width: 0, height: 10 },
-  shadowOpacity: 0.1,
-  shadowRadius: 24,
-  elevation: 8,
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.08,
+  shadowRadius: 16,
+  elevation: 4,
 } as const;
 
+/** Role accents — Direction A: accent only, never full-surface theming. */
+export const roleAccent: Record<UserRole, string> = {
+  customer: colors.blue,
+  worker: colors.emerald,
+  cooperative: colors.purple,
+};
+
+export const roleAccentLight: Record<UserRole, string> = {
+  customer: colors.blueLight,
+  worker: colors.emeraldLight,
+  cooperative: colors.purpleLight,
+};
+
+export type StatusTone = { fg: string; bg: string; border?: string };
+
+/** Single source for booking/lifecycle status color. */
+export function statusTone(status: BookingStatus): StatusTone {
+  switch (status) {
+    case 'requested':
+      return { fg: colors.warningFg, bg: colors.warningLight, border: '#fde68a' };
+    case 'accepted':
+    case 'active':
+    case 'in_progress':
+      return { fg: colors.infoFg, bg: colors.infoLight, border: '#bfdbfe' };
+    case 'completed':
+      return { fg: colors.successFg, bg: colors.successLight, border: '#a7f3d0' };
+    case 'disputed':
+      return { fg: colors.errorFg, bg: colors.errorLight, border: '#fecdd3' };
+    case 'declined':
+    case 'expired':
+    case 'cancelled':
+    case 'draft':
+    default:
+      return { fg: colors.neutralFg, bg: colors.slate100, border: colors.border };
+  }
+}
 
 /**
  * MD3 role tokens — brand-seeded additive layer (zero deps, Hermes-safe).
- * Every role maps to existing color/spacing/radius/font constants so screens
- * can repoint from hardcoded hexes WITHOUT introducing new tokens or deps.
+ * Screens should prefer roleAccent/statusTone; md3 remains for shell pieces.
  */
 export const md3 = {
   colors: {
@@ -146,14 +197,14 @@ export const md3 = {
     full: radius.full,
   },
   type: {
-    displayLarge: fontSize['2xl'],
-    displayMedium: fontSize.xl,
-    headlineMedium: fontSize.lg,
-    titleLarge: fontSize.lg,
-    titleMedium: fontSize.base,
-    bodyLarge: fontSize.base,
-    bodyMedium: fontSize.sm,
-    labelLarge: fontSize.sm,
+    displayLarge: fontSize.xl,
+    displayMedium: fontSize.lg,
+    headlineMedium: fontSize.base,
+    titleLarge: fontSize.base,
+    titleMedium: fontSize.sm,
+    bodyLarge: fontSize.sm,
+    bodyMedium: fontSize.xs,
+    labelLarge: fontSize.xs,
     labelMedium: fontSize.xs,
   },
 } as const;
@@ -161,11 +212,18 @@ export const md3 = {
 export const shared = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.lg,
     ...cardShadow,
+  },
+  cardFlat: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
   },
   row: {
     flexDirection: 'row',
@@ -180,17 +238,17 @@ export const shared = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '700',
     color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   title: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.lg,
     fontWeight: '800',
     color: colors.textPrimary,
+    letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
+    marginTop: 2,
   },
   divider: {
     height: 1,
@@ -200,7 +258,7 @@ export const shared = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: radius.full,
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     overflow: 'hidden',
   },
@@ -211,5 +269,24 @@ export const shared = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '600',
     overflow: 'hidden',
+  },
+  screen: {
+    flex: 1,
+    gap: spacing.xl,
+    paddingBottom: 96,
+  },
+  bodyText: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
+  meta: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+  },
+  label: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
 });

@@ -13,16 +13,12 @@ import {
   MapPin,
   Star,
   Clock,
-  X,
-  ArrowRight,
   Radio,
-  Sparkles,
   Building2
 } from 'lucide-react-native';
 import { Worker, Booking, CustomerProfile } from '../../types';
 import { mockWorkers } from '../../data/workersData';
-import { Host, BottomSheet } from '@expo/ui';
-import { TextField, Chip } from '../../ui';
+import { TextField, Chip, Card, Badge, Button, PrimaryButton, AppModal, ListRow, SectionTitle } from '../../ui';
 import {
   AppLanguage,
   mobileTranslations,
@@ -30,6 +26,7 @@ import {
   getLocalizedSlot,
   getLocalizedTask
 } from '../../data/mobileTranslations';
+import { colors, radius, spacing, fontSize, cardShadow, roleAccent } from '../../theme';
 
 interface CustomerBookProps {
   customer: CustomerProfile;
@@ -39,6 +36,8 @@ interface CustomerBookProps {
   onCreateBooking: (newBooking: Booking) => void;
   onNavigateTab: (tab: string) => void;
 }
+
+const accent = roleAccent.customer;
 
 export const CustomerBook: React.FC<CustomerBookProps> = ({
   customer,
@@ -53,18 +52,15 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
   const [selectedTrade, setSelectedTrade] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Selection & Request State
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(initialSelectedWorker || null);
   const [isDrafting, setIsDrafting] = useState(false);
 
-  // Form fields
   const [taskDescription, setTaskDescription] = useState('');
   const [scheduledSlot, setScheduledSlot] = useState('Immediate (within 30 mins)');
   const [address, setAddress] = useState('Flat 402, Shanti Heights, Paud Road, Kothrud');
 
-  // 5-Min Countdown active state for prototype demo
   const [activeRequestedBooking, setActiveRequestedBooking] = useState<Booking | null>(null);
-  const [secondsLeft, setSecondsLeft] = useState<number>(300); // 5 mins
+  const [secondsLeft, setSecondsLeft] = useState<number>(300);
 
   useEffect(() => {
     if (initialSelectedWorker) {
@@ -73,7 +69,6 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
     }
   }, [initialSelectedWorker]);
 
-  // Countdown timer for request
   useEffect(() => {
     if (!activeRequestedBooking) return;
     const interval = setInterval(() => {
@@ -115,7 +110,6 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
     { value: 'Tomorrow Morning (9:00 AM - 11:00 AM)', label: t.customer.book.slotTomorrow }
   ];
 
-  // Filter workers
   const filteredWorkers = mockWorkers.filter((w) => {
     const matchesTrade = selectedTrade === 'all' || w.primaryTrade === selectedTrade;
     const matchesQuery =
@@ -182,7 +176,6 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
     setSecondsLeft(300);
   };
 
-  // Demo actions during the 5-minute decision window
   const handleAcceptRequest = () => {
     if (!activeRequestedBooking) return;
     const acceptedBooking: Booking = {
@@ -250,10 +243,9 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
   return (
     <View style={styles.root}>
 
-      {/* Search & Locality Selector */}
-      <View style={styles.searchCard}>
+      <Card style={styles.searchCard}>
         <View style={styles.localityLabelRow}>
-          <MapPin size={14} color="#2563eb" />
+          <MapPin size={14} color={accent} />
           <Text style={styles.localityLabelText}>{t.customer.book.selectWardHub}</Text>
         </View>
         <View style={styles.localityChips}>
@@ -262,25 +254,22 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
               key={loc}
               label={loc}
               selected={selectedLocality === loc}
-              color="#2563eb"
+              color={accent}
               onPress={() => setSelectedLocality(loc)}
             />
           ))}
         </View>
 
-        {/* Search input */}
         <View style={styles.searchWrap}>
-          <View style={styles.searchIconWrap}>
-            <Search size={16} color="#94a3b8" />
-          </View>
+          <Search size={16} color={colors.textMuted} />
           <TextField
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder={t.customer.book.searchPlaceholder}
+            style={styles.searchField}
           />
         </View>
 
-        {/* Trade Category Horizontal Scroll */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -291,14 +280,13 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
               key={trade.id}
               label={trade.label}
               selected={selectedTrade === trade.id}
-              color="#2563eb"
+              color={accent}
               onPress={() => setSelectedTrade(trade.id)}
             />
           ))}
         </ScrollView>
-      </View>
+      </Card>
 
-      {/* Workers List Header */}
       <View style={styles.workersHeader}>
         <Text style={styles.workersCount}>
           {t.customer.book.workersNearbyCount.replace('{count}', String(filteredWorkers.length))}
@@ -306,10 +294,9 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
         <Text style={styles.workersSorted}>{t.customer.book.sortedBy}</Text>
       </View>
 
-      {/* Workers Cards */}
       <View style={styles.workersList}>
         {filteredWorkers.map((worker) => (
-          <View key={worker.id} style={styles.workerCard}>
+          <Card key={worker.id} style={styles.workerCard}>
             <View style={styles.workerTopRow}>
               <View style={styles.workerImgWrap}>
                 <Image
@@ -325,9 +312,9 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
               <View style={styles.workerInfo}>
                 <View style={styles.workerNameRow}>
                   <Text style={styles.workerName} numberOfLines={1}>{worker.name}</Text>
-                  <View style={styles.feePill}>
-                    <Text style={styles.feePillText}>₹{worker.baseVisitFee}</Text>
-                  </View>
+                  <Badge color={colors.textPrimary} bg={colors.slate100}>
+                    ₹{worker.baseVisitFee}
+                  </Badge>
                 </View>
 
                 <Text style={styles.workerTrade} numberOfLines={1}>
@@ -336,7 +323,7 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
 
                 <View style={styles.workerMeta}>
                   <View style={styles.ratingRow}>
-                    <Star size={12} color="#fbbf24" fill="#fbbf24" />
+                    <Star size={12} color={colors.amber} fill={colors.amber} />
                     <Text style={styles.ratingText}>{worker.rating}</Text>
                   </View>
                   <Text style={styles.metaDot}>•</Text>
@@ -345,7 +332,7 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
                   </Text>
                   <Text style={styles.metaDot}>•</Text>
                   <View style={styles.etaRow}>
-                    <Clock size={12} color="#047857" />
+                    <Clock size={12} color={colors.emeraldDark} />
                     <Text style={styles.etaText}>
                       {worker.etaMinutes}m ({worker.distanceKm}km)
                     </Text>
@@ -354,156 +341,134 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
               </View>
             </View>
 
-            {/* Cooperative Affiliation Tag */}
             {worker.cooperativeSociety && (
               <View style={styles.coopTag}>
                 <View style={styles.coopTagLeft}>
-                  <Building2 size={14} color="#1d4ed8" />
+                  <Building2 size={14} color={accent} />
                   <Text style={styles.coopTagText} numberOfLines={1}>
                     {worker.cooperativeSociety}
                   </Text>
                 </View>
-                <View style={styles.coopBadge}>
-                  <Text style={styles.coopBadgeText}>{t.customer.book.coopBadge}</Text>
-                </View>
+                <Badge color={accent} bg={colors.surface} border>
+                  {t.customer.book.coopBadge}
+                </Badge>
               </View>
             )}
 
-            {/* Skills pills */}
             <View style={styles.skillsRow}>
               {worker.skills.slice(0, 3).map((skill, idx) => (
-                <View key={idx} style={styles.skillPill}>
-                  <Text style={styles.skillPillText}>{skill}</Text>
-                </View>
+                <Badge key={idx} color={colors.textSecondary} bg={colors.slate100}>
+                  {skill}
+                </Badge>
               ))}
             </View>
 
-            {/* Action button */}
-            <Pressable
+            <PrimaryButton
+              label={t.customer.book.sendRequestBtn}
+              color={accent}
               onPress={() => handleStartDrafting(worker)}
-              style={({ pressed }) => [styles.requestBtn, pressed && styles.pressed]}
-            >
-              <Text style={styles.requestBtnText}>{t.customer.book.sendRequestBtn}</Text>
-              <ArrowRight size={14} color="#ffffff" />
-            </Pressable>
-          </View>
+            />
+          </Card>
         ))}
       </View>
 
-      {/* Bottom Sheet: Request Form */}
-      {isDrafting && selectedWorker && (
-      <Host>
-        <BottomSheet
-          isPresented
-          onDismiss={handleCloseDrafting}
-          containerColor="#ffffff"
-          contentPadding={0}
-        >
-          <View style={styles.sheet}>
+      <AppModal
+        visible={isDrafting && !!selectedWorker}
+        onClose={handleCloseDrafting}
+        title={t.customer.book.requestWorker.replace('{name}', selectedWorker?.name || '')}
+        subtitle={
+          selectedWorker
+            ? `${getLocalizedTrade(selectedWorker.primaryTradeLabel, currentLang)} • ${selectedWorker.etaMinutes} ${t.customer.home.minsAway}`
+            : ''
+        }
+      >
+        {selectedWorker && (
+          <ListRow
+            leading={
+              <Image
+                source={{ uri: selectedWorker.photo }}
+                style={styles.sheetWorkerImg}
+                resizeMode="cover"
+              />
+            }
+            title={
+              <Text style={styles.sheetWorkerName} numberOfLines={1}>
+                {selectedWorker.name}
+              </Text>
+            }
+            subtitle={
+              <Text style={styles.sheetWorkerTrade} numberOfLines={1}>
+                {getLocalizedTrade(selectedWorker.primaryTradeLabel, currentLang)}
+              </Text>
+            }
+            trailing={
+              <Badge color={colors.textPrimary} bg={colors.slate100}>
+                ₹{selectedWorker.baseVisitFee}
+              </Badge>
+            }
+          />
+        )}
 
-            {/* Sheet Header */}
-            <View style={styles.sheetHeader}>
-              <View style={styles.sheetHeaderLeft}>
-                {selectedWorker && (
-                  <Image
-                    source={{ uri: selectedWorker.photo }}
-                    style={styles.sheetWorkerImg}
-                    resizeMode="cover"
-                  />
-                )}
-                <View>
-                  <Text style={styles.sheetTitle}>
-                    {t.customer.book.requestWorker.replace('{name}', selectedWorker?.name || '')}
-                  </Text>
-                  <Text style={styles.sheetSubtitle}>
-                    {selectedWorker
-                      ? `${getLocalizedTrade(selectedWorker.primaryTradeLabel, currentLang)} • ${selectedWorker.etaMinutes} ${t.customer.home.minsAway}`
-                      : ''}
-                  </Text>
-                </View>
-              </View>
-              <Pressable onPress={handleCloseDrafting} style={({ pressed }) => [styles.sheetCloseBtn, pressed && styles.pressed]}>
-                <X size={20} color="#94a3b8" />
-              </Pressable>
-            </View>
+        <TextField
+          label={t.customer.book.describeTask}
+          value={taskDescription}
+          onChangeText={setTaskDescription}
+          placeholder={t.customer.book.describeTaskPlaceholder}
+          multiline
+          numberOfLines={2}
+        />
 
-            {/* Form inputs */}
-            <ScrollView style={styles.sheetBody} showsVerticalScrollIndicator={false}>
-
-              <View style={styles.formField}>
-                <Text style={styles.formLabel}>{t.customer.book.describeTask}</Text>
-                <TextField
-                  value={taskDescription}
-                  onChangeText={setTaskDescription}
-                  placeholder={t.customer.book.describeTaskPlaceholder}
-                  multiline
-                  numberOfLines={2}
-                />
-              </View>
-
-              <View style={styles.formField}>
-                <Text style={styles.formLabel}>{t.customer.book.preferredSlot}</Text>
-                <View style={styles.slotChips}>
-                  {slots.map((slot) => (
-                    <Chip
-                      key={slot.value}
-                      label={slot.label}
-                      selected={scheduledSlot === slot.value}
-                      color="#2563eb"
-                      onPress={() => setScheduledSlot(slot.value)}
-                    />
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.formField}>
-                <Text style={styles.formLabel}>{t.customer.book.serviceAddress}</Text>
-                <TextField value={address} onChangeText={setAddress} />
-              </View>
-
-              {/* Transparent Cooperative Rate Breakdown */}
-              <View style={styles.pricingCard}>
-                <Text style={styles.pricingTitle}>{t.customer.book.transparentPricing}</Text>
-
-                <View style={styles.pricingRow}>
-                  <Text style={styles.pricingLabel}>{t.customer.book.baseVisit}</Text>
-                  <Text style={styles.pricingValue}>₹{selectedWorker?.baseVisitFee ?? 0}</Text>
-                </View>
-                <View style={styles.pricingRow}>
-                  <Text style={styles.pricingLabel}>{t.customer.book.coopSafetyFund}</Text>
-                  <Text style={styles.pricingValue}>₹15</Text>
-                </View>
-                <View style={styles.pricingTotalRow}>
-                  <Text style={styles.pricingTotalLabel}>{t.customer.book.totalPayable}</Text>
-                  <Text style={styles.pricingTotalValue}>₹{(selectedWorker?.baseVisitFee ?? 0) + 15}</Text>
-                </View>
-
-                <View style={styles.payoutNoteRow}>
-                  <Sparkles size={14} color="#2563eb" />
-                  <Text style={styles.payoutNote}>
-                    {t.customer.book.directPayoutNote
-                      .replace('{amount}', String(Math.round((selectedWorker?.baseVisitFee ?? 0) * 0.88)))
-                      .replace('{name}', selectedWorker?.name || '')}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Submit CTA */}
-              <Pressable
-                onPress={handleSubmitRequest}
-                style={({ pressed }) => [styles.submitBtn, pressed && styles.pressed]}
-              >
-                <Text style={styles.submitBtnText}>{t.customer.book.sendRequestBtn}</Text>
-                <ArrowRight size={16} color="#ffffff" />
-              </Pressable>
-
-            </ScrollView>
+        <View>
+          <Text style={styles.formLabel}>{t.customer.book.preferredSlot}</Text>
+          <View style={styles.slotChips}>
+            {slots.map((slot) => (
+              <Chip
+                key={slot.value}
+                label={slot.label}
+                selected={scheduledSlot === slot.value}
+                color={accent}
+                onPress={() => setScheduledSlot(slot.value)}
+              />
+            ))}
           </View>
-        </BottomSheet>
-      </Host>
-      )}
+        </View>
 
-      {/* 5-Minute Live Countdown Modal with Demo Controls */}
+        <TextField
+          label={t.customer.book.serviceAddress}
+          value={address}
+          onChangeText={setAddress}
+        />
+
+        <Card style={styles.pricingCard}>
+          <SectionTitle>{t.customer.book.transparentPricing}</SectionTitle>
+
+          <View style={styles.pricingRow}>
+            <Text style={styles.pricingLabel}>{t.customer.book.baseVisit}</Text>
+            <Text style={styles.pricingValue}>₹{selectedWorker?.baseVisitFee ?? 0}</Text>
+          </View>
+          <View style={styles.pricingRow}>
+            <Text style={styles.pricingLabel}>{t.customer.book.coopSafetyFund}</Text>
+            <Text style={styles.pricingValue}>₹15</Text>
+          </View>
+          <View style={styles.pricingTotalRow}>
+            <Text style={styles.pricingTotalLabel}>{t.customer.book.totalPayable}</Text>
+            <Text style={styles.pricingTotalValue}>₹{(selectedWorker?.baseVisitFee ?? 0) + 15}</Text>
+          </View>
+
+          <Text style={styles.payoutNote}>
+            {t.customer.book.directPayoutNote
+              .replace('{amount}', String(Math.round((selectedWorker?.baseVisitFee ?? 0) * 0.88)))
+              .replace('{name}', selectedWorker?.name || '')}
+          </Text>
+        </Card>
+
+        <PrimaryButton
+          label={t.customer.book.sendRequestBtn}
+          color={accent}
+          onPress={handleSubmitRequest}
+        />
+      </AppModal>
+
       <Modal
         visible={!!activeRequestedBooking}
         transparent
@@ -513,25 +478,20 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
         <View style={styles.countdownBackdrop}>
           <View style={styles.countdownSheet}>
 
-            {/* Pulsing Radar Ring */}
-            <View style={styles.radarWrap}>
-              <View style={styles.radarPing} />
-              <View style={styles.radarCore}>
-                <Radio size={28} color="#2563eb" />
-              </View>
+            <View style={styles.radarCore}>
+              <Radio size={28} color={accent} />
             </View>
 
             <View style={styles.countdownCenter}>
-              <Text style={styles.countdownDispatchLabel}>
+              <SectionTitle style={styles.countdownDispatchLabel}>
                 {activeRequestedBooking
                   ? t.customer.book.dispatchedTo.replace('{name}', activeRequestedBooking.workerName)
                   : ''}
-              </Text>
+              </SectionTitle>
               <Text style={styles.countdownTimer}>{formatTimer(secondsLeft)}</Text>
               <Text style={styles.countdownWaiting}>{t.customer.book.waitingConfirmation}</Text>
             </View>
 
-            {/* Booking Summary Box */}
             <View style={styles.summaryBox}>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>{t.customer.book.taskLabel}</Text>
@@ -557,28 +517,18 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
               </View>
             </View>
 
-            {/* Prototype Demo Controls */}
             <View style={styles.demoControls}>
-              <Text style={styles.demoControlsLabel}>{t.customer.book.demoControls}</Text>
+              <SectionTitle style={styles.demoControlsLabel}>{t.customer.book.demoControls}</SectionTitle>
               <View style={styles.demoBtns}>
-                <Pressable
-                  onPress={handleAcceptRequest}
-                  style={({ pressed }) => [styles.demoAcceptBtn, pressed && styles.pressed]}
-                >
-                  <Text style={styles.demoAcceptText}>{t.customer.book.demoAccept}</Text>
-                </Pressable>
-                <Pressable
-                  onPress={handleDeclineRequest}
-                  style={({ pressed }) => [styles.demoDeclineBtn, pressed && styles.pressed]}
-                >
-                  <Text style={styles.demoDeclineText}>{t.customer.book.demoDecline}</Text>
-                </Pressable>
-                <Pressable
-                  onPress={handleExpireRequest}
-                  style={({ pressed }) => [styles.demoExpireBtn, pressed && styles.pressed]}
-                >
-                  <Text style={styles.demoExpireText}>{t.customer.book.demoExpire}</Text>
-                </Pressable>
+                <Button color={accent} style={styles.demoBtnFlex} onPress={handleAcceptRequest}>
+                  {t.customer.book.demoAccept}
+                </Button>
+                <Button variant="soft" color={colors.slate700} style={styles.demoBtnFlex} onPress={handleDeclineRequest}>
+                  {t.customer.book.demoDecline}
+                </Button>
+                <Button variant="soft" color={colors.amber} style={styles.demoBtnFlex} onPress={handleExpireRequest}>
+                  {t.customer.book.demoExpire}
+                </Button>
               </View>
             </View>
 
@@ -593,26 +543,13 @@ export const CustomerBook: React.FC<CustomerBookProps> = ({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    padding: 16,
-    gap: 16,
-    paddingBottom: 96,
+    gap: spacing.lg,
   },
   pressed: {
     opacity: 0.85,
-    transform: [{ scale: 0.98 }],
   },
   searchCard: {
-    backgroundColor: '#ffffff',
-    padding: 16,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
-    gap: 12,
+    gap: spacing.md,
   },
   localityLabelRow: {
     flexDirection: 'row',
@@ -620,9 +557,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   localityLabelText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#64748b',
+    color: colors.textSecondary,
   },
   localityChips: {
     flexDirection: 'row',
@@ -630,56 +567,43 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   searchWrap: {
-    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
-  searchIconWrap: {
-    position: 'absolute',
-    left: 12,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    zIndex: 1,
+  searchField: {
+    flex: 1,
   },
   tradeChips: {
     gap: 6,
-    paddingBottom: 4,
+    paddingBottom: spacing.xs,
   },
   workersHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing.xs,
   },
   workersCount: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '500',
-    color: '#64748b',
+    color: colors.textSecondary,
   },
   workersSorted: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '500',
-    color: '#64748b',
+    color: colors.textSecondary,
   },
   workersList: {
-    gap: 12,
+    gap: spacing.md,
   },
   workerCard: {
-    backgroundColor: '#ffffff',
-    padding: 16,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
-    gap: 12,
+    gap: spacing.md,
   },
   workerTopRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
+    gap: spacing.md,
   },
   workerImgWrap: {
     position: 'relative',
@@ -687,9 +611,9 @@ const styles = StyleSheet.create({
   workerImg: {
     width: 56,
     height: 56,
-    borderRadius: 16,
+    borderRadius: radius.card,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
   verifiedBadge: {
     position: 'absolute',
@@ -697,15 +621,15 @@ const styles = StyleSheet.create({
     right: -4,
     width: 16,
     height: 16,
-    backgroundColor: '#059669',
-    borderRadius: 999,
+    backgroundColor: colors.success,
+    borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: '#ffffff',
+    borderColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   verifiedText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 9,
     fontWeight: '700',
   },
@@ -717,36 +641,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 4,
+    gap: spacing.xs,
   },
   workerName: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.textPrimary,
     flexShrink: 1,
   },
-  feePill: {
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  feePillText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
   workerTrade: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#1d4ed8',
+    color: accent,
     marginTop: 1,
   },
   workerMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 4,
+    gap: spacing.sm,
+    marginTop: spacing.xs,
   },
   ratingRow: {
     flexDirection: 'row',
@@ -754,38 +667,39 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   ratingText: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#b45309',
+    color: colors.warningFg,
   },
   metaDot: {
-    fontSize: 11,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   metaText: {
-    fontSize: 11,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   etaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   etaText: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#047857',
+    color: colors.emeraldDark,
   },
   coopTag: {
-    backgroundColor: 'rgba(239,246,255,0.7)',
-    paddingHorizontal: 12,
+    backgroundColor: colors.slate50,
+    paddingHorizontal: spacing.md,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: '#dbeafe',
+    borderColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   coopTagLeft: {
     flexDirection: 'row',
@@ -794,362 +708,180 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   coopTagText: {
-    fontSize: 11,
-    color: '#1e3a8a',
+    fontSize: fontSize.xs,
+    color: colors.infoFg,
     flexShrink: 1,
-  },
-  coopBadge: {
-    marginLeft: 4,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
-  },
-  coopBadgeText: {
-    fontSize: 9.5,
-    fontWeight: '700',
-    color: '#1e40af',
   },
   skillsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
-  },
-  skillPill: {
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  skillPillText: {
-    fontSize: 10,
-    color: '#475569',
-  },
-  requestBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: '#2563eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  requestBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#ffffff',
-  },
-  sheet: {
-    backgroundColor: '#ffffff',
-  },
-  sheetHeader: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    backgroundColor: '#0f172a',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sheetHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    gap: spacing.xs,
   },
   sheetWorkerImg: {
     width: 36,
     height: 36,
-    borderRadius: 12,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: colors.border,
   },
-  sheetTitle: {
-    fontSize: 14,
+  sheetWorkerName: {
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#ffffff',
-    lineHeight: 18,
+    color: colors.textPrimary,
   },
-  sheetSubtitle: {
-    fontSize: 11,
-    color: '#93c5fd',
-    marginTop: 1,
-  },
-  sheetCloseBtn: {
-    padding: 4,
-    borderRadius: 999,
-  },
-  sheetBody: {
-    padding: 16,
-    gap: 14,
-  },
-  formField: {
-    marginBottom: 14,
+  sheetWorkerTrade: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   formLabel: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#334155',
-    marginBottom: 4,
+    color: colors.textPrimary,
+    marginBottom: 6,
   },
   slotChips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginVertical: 4,
+    gap: spacing.sm,
+    marginVertical: spacing.xs,
   },
   pricingCard: {
-    backgroundColor: 'rgba(239,246,255,0.8)',
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(191,219,254,0.8)',
-    gap: 8,
-  },
-  pricingTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#1e3a8a',
+    backgroundColor: colors.slate50,
+    gap: spacing.sm,
   },
   pricingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   pricingLabel: {
-    fontSize: 12,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   pricingValue: {
-    fontSize: 12,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   pricingTotalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingTop: 8,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: '#bfdbfe',
+    borderTopColor: colors.border,
   },
   pricingTotalLabel: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.textPrimary,
   },
   pricingTotalValue: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#0f172a',
-  },
-  payoutNoteRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingTop: 4,
+    color: colors.textPrimary,
   },
   payoutNote: {
-    flex: 1,
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#1e40af',
-  },
-  submitBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: '#2563eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  submitBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#ffffff',
+    color: colors.infoFg,
+    paddingTop: spacing.xs,
   },
   countdownBackdrop: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    backgroundColor: 'rgba(15,23,42,0.7)',
+    padding: spacing.lg,
+    backgroundColor: colors.overlay,
   },
   countdownSheet: {
     width: '100%',
     maxWidth: 384,
-    backgroundColor: '#ffffff',
-    borderRadius: 24,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 20,
+    borderColor: colors.border,
+    padding: spacing.xl,
     alignItems: 'center',
-    gap: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  radarWrap: {
-    width: 80,
-    height: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radarPing: {
-    position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 999,
-    backgroundColor: 'rgba(96,165,250,0.75)',
-    opacity: 0.4,
+    gap: spacing.lg,
+    ...cardShadow,
   },
   radarCore: {
     width: 64,
     height: 64,
-    borderRadius: 999,
-    backgroundColor: '#eff6ff',
+    borderRadius: radius.full,
+    backgroundColor: colors.blueLight,
     borderWidth: 2,
-    borderColor: '#2563eb',
+    borderColor: accent,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 2,
   },
   countdownCenter: {
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   countdownDispatchLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#1d4ed8',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
     textAlign: 'center',
   },
   countdownTimer: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#0f172a',
+    fontSize: fontSize.xl,
+    fontWeight: '800',
+    color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
   countdownWaiting: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   summaryBox: {
     alignSelf: 'stretch',
-    backgroundColor: '#f8fafc',
-    padding: 12,
-    borderRadius: 16,
+    backgroundColor: colors.slate50,
+    padding: spacing.md,
+    borderRadius: radius.card,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    gap: 4,
+    borderColor: colors.border,
+    gap: spacing.xs,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   summaryLabel: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   summaryValueBold: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#1e293b',
+    color: colors.slate800,
     maxWidth: 180,
     flexShrink: 1,
   },
   summaryValue: {
-    fontSize: 12,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     flexShrink: 1,
   },
   summaryValueTotal: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#0f172a',
+    color: colors.textPrimary,
   },
   demoControls: {
     alignSelf: 'stretch',
-    paddingTop: 8,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
+    borderTopColor: colors.border,
   },
   demoControlsLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#94a3b8',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   demoBtns: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
   },
-  demoAcceptBtn: {
+  demoBtnFlex: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderRadius: 12,
-    backgroundColor: '#2563eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  demoAcceptText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#ffffff',
-    textAlign: 'center',
-  },
-  demoDeclineBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderRadius: 12,
-    backgroundColor: '#f1f5f9',
-  },
-  demoDeclineText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#334155',
-    textAlign: 'center',
-  },
-  demoExpireBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderRadius: 12,
-    backgroundColor: '#fef3c7',
-  },
-  demoExpireText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#92400e',
-    textAlign: 'center',
   },
 });

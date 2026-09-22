@@ -12,7 +12,16 @@ import {
 } from 'react-native';
 import { Host, BottomSheet } from '@expo/ui';
 import { Star, X } from 'lucide-react-native';
-import { colors, radius, spacing, fontSize, cardShadow } from '../theme';
+import {
+  colors,
+  radius,
+  spacing,
+  fontSize,
+  cardShadow,
+  statusTone,
+  type StatusTone,
+} from '../theme';
+import type { BookingStatus } from '../types';
 
 // ---------------------------------------------------------------------------
 // Card
@@ -91,7 +100,7 @@ interface BadgeProps {
   border?: boolean;
   style?: StyleProp<TextStyle>;
 }
-export function Badge({ children, color = '#0f172a', bg = '#f1f5f9', border, style }: BadgeProps) {
+export function Badge({ children, color = colors.textPrimary, bg = colors.slate100, border, style }: BadgeProps) {
   return (
     <Text
       style={[
@@ -122,7 +131,7 @@ interface ButtonProps {
 export function Button({
   onPress,
   children,
-  color = '#059669',
+  color = colors.primary,
   disabled,
   style,
   textStyle,
@@ -142,7 +151,7 @@ export function Button({
       ? color + '00'
       : 'transparent';
   const fontColor =
-    variant === 'solid' ? '#ffffff' : variant === 'outline' || variant === 'soft' ? color : '#334155';
+    variant === 'solid' ? colors.white : variant === 'outline' || variant === 'soft' ? color : colors.slate700;
 
   return (
     <Pressable
@@ -179,7 +188,7 @@ interface IconButtonProps {
   size?: number;
   style?: StyleProp<ViewStyle>;
 }
-export function IconButton({ onPress, icon, color: _color = '#0f172a', bg, size = 36, style }: IconButtonProps) {
+export function IconButton({ onPress, icon, color: _color = colors.textPrimary, bg, size = 36, style }: IconButtonProps) {
   return (
     <Pressable
       onPress={onPress}
@@ -209,7 +218,7 @@ interface ChipProps {
 export function Chip({
   label,
   selected,
-  color = '#059669',
+  color = colors.primary,
   onPress,
   style,
   textStyle,
@@ -219,13 +228,13 @@ export function Chip({
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
-        { borderColor: selected ? color : '#e2e8f0', backgroundColor: selected ? color + '1a' : '#ffffff' },
+        { borderColor: selected ? color : colors.border, backgroundColor: selected ? color + '1a' : colors.surface },
         pressed && styles.buttonPressed,
         style,
       ]}
     >
       <Text
-        style={[styles.chipText, { color: selected ? color : '#475569' }, textStyle]}
+        style={[styles.chipText, { color: selected ? color : colors.slate600 }, textStyle]}
         numberOfLines={1}
       >
         {label}
@@ -275,13 +284,14 @@ export function TextField({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor={colors.textMuted}
         keyboardType={keyboardType}
         multiline={multiline}
         numberOfLines={multiline ? numberOfLines : undefined}
         secureTextEntry={secureTextEntry}
         style={[styles.input, multiline && styles.inputMultiline, inputStyle]}
         maxLength={undefined}
+        accessibilityLabel={label}
       />
     </View>
   );
@@ -296,7 +306,7 @@ interface StarRatingProps {
   size?: number;
   color?: string;
 }
-export function StarRating({ value, onChange, size = 16, color = '#f59e0b' }: StarRatingProps) {
+export function StarRating({ value, onChange, size = 16, color = colors.amber }: StarRatingProps) {
   const stars = [1, 2, 3, 4, 5];
   return (
     <Row>
@@ -304,7 +314,7 @@ export function StarRating({ value, onChange, size = 16, color = '#f59e0b' }: St
         <Pressable key={star} disabled={!onChange} onPress={onChange ? () => onChange(star) : undefined}>
           <Star
             size={size}
-            color={star <= value ? color : '#cbd5e1'}
+            color={star <= value ? color : colors.slate300}
             fill={star <= value ? color : 'none'}
           />
         </Pressable>
@@ -347,19 +357,23 @@ export function AppModal({ visible, onClose, title, subtitle, children }: AppMod
   if (!visible) return null;
   return (
     <Host>
-      <BottomSheet
-        isPresented={visible}
-        onDismiss={onClose}
-        containerColor="#ffffff"
-        contentPadding={{ top: 8, bottom: 20, left: 16, right: 16 }}
-      >
+        <BottomSheet
+          isPresented={visible}
+          onDismiss={onClose}
+          containerColor={colors.surface}
+          contentPadding={{ top: 8, bottom: 20, left: 16, right: 16 }}
+        >
         <View>
           <Row between style={styles.modalHeader}>
             <View style={{ flex: 1, paddingRight: spacing.md }}>
               {title ? <Text style={styles.modalTitle}>{title}</Text> : null}
               {subtitle ? <Text style={styles.modalSubtitle}>{subtitle}</Text> : null}
             </View>
-            <IconButton onPress={onClose} icon={<X size={18} color="#64748b" />} bg="#f1f5f9" />
+            <IconButton
+              onPress={onClose}
+              icon={<X size={18} color={colors.textSecondary} />}
+              bg={colors.slate100}
+            />
           </Row>
           <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
             {children}
@@ -379,7 +393,7 @@ interface StatBoxProps {
   color?: string;
   icon?: React.ReactNode;
 }
-export function StatBox({ label, value, color = '#059669', icon }: StatBoxProps) {
+export function StatBox({ label, value, color = colors.primary, icon }: StatBoxProps) {
   return (
     <Card style={styles.statBox} padded={false}>
       <View style={[styles.statIconWrap, { backgroundColor: color + '1a' }]}>{icon}</View>
@@ -390,6 +404,193 @@ export function StatBox({ label, value, color = '#059669', icon }: StatBoxProps)
         {label}
       </Text>
     </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section — one label style for the whole app
+// ---------------------------------------------------------------------------
+interface SectionProps {
+  title?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+}
+export function Section({ title, action, children, style }: SectionProps) {
+  return (
+    <View style={[{ gap: spacing.sm }, style]}>
+      {(title || action) && (
+        <Row between>
+          {title ? <SectionTitle>{title}</SectionTitle> : <View />}
+          {action}
+        </Row>
+      )}
+      {children}
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Segmented — the one filter/tab control
+// ---------------------------------------------------------------------------
+interface SegmentedOption<T extends string> {
+  value: T;
+  label: string;
+}
+interface SegmentedProps<T extends string> {
+  options: SegmentedOption<T>[];
+  value: T;
+  onChange: (value: T) => void;
+  accent?: string;
+  style?: StyleProp<ViewStyle>;
+}
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+  accent = colors.primary,
+  style,
+}: SegmentedProps<T>) {
+  return (
+    <View style={[styles.segmented, style]}>
+      {options.map((opt) => {
+        const active = opt.value === value;
+        return (
+          <Pressable
+            key={opt.value}
+            onPress={() => onChange(opt.value)}
+            style={({ pressed }) => [
+              styles.segment,
+              active && { backgroundColor: colors.surface },
+              active && styles.segmentActive,
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <Text
+              numberOfLines={1}
+              style={[styles.segmentText, active && { color: colors.textPrimary, fontWeight: '700' }]}
+            >
+              {opt.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// StatusBadge — statusTone() only; no local hex maps
+// ---------------------------------------------------------------------------
+interface StatusBadgeProps {
+  status: BookingStatus;
+  label: string;
+  style?: StyleProp<TextStyle>;
+}
+export function StatusBadge({ status, label, style }: StatusBadgeProps) {
+  const tone = statusTone(status);
+  return (
+    <Text style={[styles.statusBadge, { color: tone.fg, backgroundColor: tone.bg }, style]}>
+      {label}
+    </Text>
+  );
+}
+
+export function ToneBadge({ tone, label }: { tone: StatusTone; label: string }) {
+  return (
+    <Text style={[styles.statusBadge, { color: tone.fg, backgroundColor: tone.bg }]}>
+      {label}
+    </Text>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ListRow — shared worker/booking/member row shell
+// ---------------------------------------------------------------------------
+interface ListRowProps {
+  leading?: React.ReactNode;
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
+  meta?: React.ReactNode;
+  trailing?: React.ReactNode;
+  onPress?: () => void;
+  accent?: string;
+  style?: StyleProp<ViewStyle>;
+}
+export function ListRow({
+  leading,
+  title,
+  subtitle,
+  meta,
+  trailing,
+  onPress,
+  accent,
+  style,
+}: ListRowProps) {
+  const body = (
+    <View
+      style={[
+        styles.listRow,
+        accent ? { borderLeftWidth: 3, borderLeftColor: accent, paddingLeft: spacing.md - 1 } : null,
+        style,
+      ]}
+    >
+      {leading}
+      <View style={styles.listRowBody}>
+        {title}
+        {subtitle}
+        {meta}
+      </View>
+      {trailing}
+    </View>
+  );
+  if (!onPress) return body;
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => pressed && { opacity: 0.88 }}>
+      {body}
+    </Pressable>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// PrimaryButton — one CTA pattern (role accent via color prop)
+// ---------------------------------------------------------------------------
+interface PrimaryButtonProps {
+  label: string;
+  onPress?: () => void;
+  color?: string;
+  variant?: 'solid' | 'outline';
+  style?: StyleProp<ViewStyle>;
+}
+export function PrimaryButton({
+  label,
+  onPress,
+  color = colors.primary,
+  variant = 'solid',
+  style,
+}: PrimaryButtonProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.primaryBtn,
+        variant === 'solid'
+          ? { backgroundColor: color }
+          : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: color },
+        pressed && { opacity: 0.88 },
+        style,
+      ]}
+    >
+      <Text
+        style={[
+          styles.primaryBtnText,
+          variant === 'solid' ? { color: colors.white } : { color },
+        ]}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -442,23 +643,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: radius.full,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
     overflow: 'hidden',
   },
   badgeBorder: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: colors.slate300,
   },
   button: {
     paddingHorizontal: spacing.lg,
-    paddingVertical: 10,
-    borderRadius: radius.md,
+    paddingVertical: 11,
+    borderRadius: radius.control,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 6,
+    minHeight: 44,
   },
   buttonBlock: {
     width: '100%',
@@ -466,6 +668,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: fontSize.sm,
     fontWeight: '700',
+    textAlign: 'center',
   },
   buttonPressed: {
     opacity: 0.82,
@@ -481,14 +684,15 @@ const styles = StyleSheet.create({
   },
   chip: {
     paddingHorizontal: spacing.md,
-    paddingVertical: 7,
+    paddingVertical: 8,
     borderRadius: radius.full,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 36,
   },
   chipText: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
   divider: {
@@ -506,11 +710,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.slate50,
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     paddingHorizontal: spacing.md,
-    paddingVertical: 10,
+    paddingVertical: 11,
     fontSize: fontSize.sm,
     color: colors.textPrimary,
+    minHeight: 44,
   },
   inputMultiline: {
     minHeight: 88,
@@ -568,5 +773,69 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  segmented: {
+    flexDirection: 'row',
+    gap: 4,
+    padding: 4,
+    backgroundColor: colors.slate100,
+    borderRadius: radius.md,
+  },
+  segment: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 7,
+    paddingHorizontal: 6,
+    borderRadius: radius.control,
+  },
+  segmentActive: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...cardShadow,
+  },
+  segmentText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: colors.slate600,
+    textAlign: 'center',
+  },
+  statusBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    overflow: 'hidden',
+    alignSelf: 'flex-start',
+  },
+  listRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.card,
+    padding: spacing.lg - 2,
+    ...cardShadow,
+  },
+  listRowBody: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  primaryBtn: {
+    minHeight: 44,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  primaryBtnText: {
+    fontSize: fontSize.sm,
+    fontWeight: '800',
   },
 });

@@ -6,12 +6,15 @@ import {
 } from 'react-native';
 import { Star, CheckCircle2, MessageSquare, Award } from 'lucide-react-native';
 import { Review } from '../../types';
-import { Button } from '../../ui';
+import { Button, Card, Title, Subtitle, EmptyState, Badge } from '../../ui';
+import { colors, radius, spacing, fontSize, roleAccent } from '../../theme';
 
 interface CustomerReviewsProps {
   reviews: Review[];
   onNavigateTab: (tab: string) => void;
 }
+
+const accent = roleAccent.customer;
 
 export const CustomerReviews: React.FC<CustomerReviewsProps> = ({
   reviews,
@@ -19,52 +22,51 @@ export const CustomerReviews: React.FC<CustomerReviewsProps> = ({
 }) => {
   return (
     <View style={styles.root}>
-
-      {/* Header */}
       <View>
-        <Text style={styles.headerTitle}>Your Reviews & Ratings</Text>
-        <Text style={styles.headerSubtitle}>
+        <Title>Your Reviews & Ratings</Title>
+        <Subtitle>
           Authentic feedback supporting worker-owner quality and cooperative dividends
-        </Text>
+        </Subtitle>
       </View>
 
-      {/* Summary metric card */}
-      <View style={styles.summaryCard}>
-        <View>
+      <Card style={styles.summaryCard}>
+        <View style={styles.summaryLeft}>
           <Text style={styles.summaryLabel}>Total Reviews Given</Text>
           <Text style={styles.summaryValue}>{reviews.length} Verified</Text>
         </View>
         <View style={styles.summaryRight}>
           <Text style={styles.summaryLabel}>Cooperative Impact</Text>
           <View style={styles.summaryImpactRow}>
-            <Award size={14} color="#6ee7b7" />
+            <Award size={14} color={colors.success} />
             <Text style={styles.summaryImpactText}>Fair Dividend Audited</Text>
           </View>
         </View>
-      </View>
+      </Card>
 
-      {/* Reviews list */}
       <View style={styles.reviewsList}>
         {reviews.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <MessageSquare size={40} color="#cbd5e1" />
-            <Text style={styles.emptyText}>You have not submitted any reviews yet.</Text>
-            <Button color="#2563eb" onPress={() => onNavigateTab('bookings')}>
-              View Completed Bookings
-            </Button>
-          </View>
+          <Card>
+            <EmptyState
+              icon={<MessageSquare size={40} color={colors.slate300} />}
+              title="You have not submitted any reviews yet."
+              action={
+                <Button color={accent} onPress={() => onNavigateTab('bookings')}>
+                  View Completed Bookings
+                </Button>
+              }
+            />
+          </Card>
         ) : (
           reviews.map((rev) => (
-            <View key={rev.id} style={styles.reviewCard}>
+            <Card key={rev.id} style={styles.reviewCard}>
               <View style={styles.reviewTop}>
                 <View style={styles.reviewTopLeft}>
                   <Text style={styles.reviewWorkerName}>{rev.workerName}</Text>
                   <Text style={styles.reviewTrade}>{rev.trade}</Text>
                 </View>
-                <View style={styles.ratingPill}>
-                  <Star size={14} color="#fbbf24" fill="#fbbf24" />
-                  <Text style={styles.ratingPillText}>{rev.rating} / 5</Text>
-                </View>
+                <Badge color={colors.warningFg} bg={colors.amberLight}>
+                  ★ {rev.rating} / 5
+                </Badge>
               </View>
 
               <Text style={styles.reviewQuote}>"{rev.text}"</Text>
@@ -72,11 +74,11 @@ export const CustomerReviews: React.FC<CustomerReviewsProps> = ({
               <View style={styles.reviewFooter}>
                 <Text style={styles.reviewDate}>Date: {rev.date}</Text>
                 <View style={styles.verifiedRow}>
-                  <CheckCircle2 size={12} color="#2563eb" />
+                  <CheckCircle2 size={12} color={accent} />
                   <Text style={styles.verifiedText}>Cooperative Verified</Text>
                 </View>
               </View>
-            </View>
+            </Card>
           ))
         )}
       </View>
@@ -88,42 +90,28 @@ export const CustomerReviews: React.FC<CustomerReviewsProps> = ({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    padding: 16,
-    gap: 16,
-    paddingBottom: 96,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: -0.4,
-    color: '#0f172a',
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: '#64748b',
+    gap: spacing.lg,
   },
   summaryCard: {
-    backgroundColor: '#1e3a8a',
-    borderRadius: 24,
-    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 2,
+    borderLeftWidth: 3,
+    borderLeftColor: accent,
+  },
+  summaryLeft: {
+    flexShrink: 1,
   },
   summaryLabel: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#93c5fd',
+    color: colors.textSecondary,
   },
   summaryValue: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#ffffff',
+    fontSize: fontSize.xl,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginTop: 2,
   },
   summaryRight: {
     alignItems: 'flex-end',
@@ -131,110 +119,70 @@ const styles = StyleSheet.create({
   summaryImpactRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
+    gap: spacing.xs,
+    marginTop: spacing.xs,
   },
   summaryImpactText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#6ee7b7',
+    color: colors.successFg,
   },
   reviewsList: {
-    gap: 12,
-  },
-  emptyCard: {
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 16,
-    paddingVertical: 48,
-  },
-  emptyText: {
-    fontSize: 12,
-    color: '#64748b',
-    marginVertical: 12,
-    textAlign: 'center',
+    gap: spacing.md,
   },
   reviewCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
-    gap: 10,
+    gap: spacing.sm,
   },
   reviewTop: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.sm,
   },
   reviewTopLeft: {
     flex: 1,
     minWidth: 0,
   },
   reviewWorkerName: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.textPrimary,
   },
   reviewTrade: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '500',
-    color: '#1d4ed8',
-  },
-  ratingPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#fffbeb',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#fde68a',
-  },
-  ratingPillText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#b45309',
+    color: accent,
+    marginTop: 1,
   },
   reviewQuote: {
-    fontSize: 12,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     lineHeight: 18,
     fontStyle: 'italic',
-    backgroundColor: '#f8fafc',
-    padding: 12,
-    borderRadius: 16,
+    backgroundColor: colors.slate50,
+    padding: spacing.md,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: colors.border,
   },
   reviewFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 4,
+    paddingTop: spacing.xs,
   },
   reviewDate: {
-    fontSize: 10.5,
-    color: '#94a3b8',
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
   },
   verifiedRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   verifiedText: {
-    fontSize: 10.5,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#1d4ed8',
+    color: accent,
   },
 });

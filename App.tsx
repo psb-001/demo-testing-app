@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { SafeAreaView as RNSSafeAreaView } from 'react-native-safe-area-context';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { colors } from './src/theme';
 import {
   UserRole,
   UserProfile,
@@ -423,7 +424,7 @@ export function App() {
     <SafeAreaProvider>
       <StatusBar barStyle="dark-content" />
       {!activeSession ? (
-        <RNSSafeAreaView edges={['top','right','bottom','left']} style={styles.container}>
+        <RNSSafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
           <LoginPortal
             currentLang={currentLang}
             onLanguageChange={handleLanguageChange}
@@ -431,7 +432,7 @@ export function App() {
           />
         </RNSSafeAreaView>
       ) : (
-        <RNSSafeAreaView edges={['top','right','bottom','left']} style={styles.container}>
+        <RNSSafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
           {/* Mobile App Viewport */}
           <View style={styles.viewport}>
             <MobileHeader
@@ -625,16 +626,16 @@ export function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.slate900,
   },
   viewport: {
     flex: 1,
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.background,
     ...({
-      shadowColor: '#0f172a',
+      shadowColor: colors.slate900,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.12,
       shadowRadius: 24,

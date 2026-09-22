@@ -1,17 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Pressable, Image, StyleSheet, Alert, Platform } from 'react-native';
-import { md3 } from '../../theme';
 import {
   Bell,
   RotateCcw,
   ChevronDown,
-  User,
-  Wrench,
-  Building2,
   LogOut,
   Globe,
 } from 'lucide-react-native';
 import { UserRole, UserProfile } from '../../types';
+import { colors, radius, fontSize, roleAccent, roleAccentLight } from '../../theme';
 import { AppLanguage, mobileTranslations } from '../../data/mobileTranslations';
 
 interface MobileHeaderProps {
@@ -40,8 +37,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   const [showLangMenu, setShowLangMenu] = useState(false);
   const langMenuRef = useRef<any>(null);
   const t = mobileTranslations[currentLang];
-
   const isWeb = Platform.OS === 'web';
+  const accent = roleAccent[currentRole];
+  const accentBg = roleAccentLight[currentRole];
 
   useEffect(() => {
     if (!isWeb) return;
@@ -62,33 +60,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Role pill themes: Customer (Blue), Worker-Owner (Green), Cooperative (Purple)
-  const roleBadgeConfig: Record<
-    UserRole,
-    { label: string; icon: React.ReactNode; badgeStyle: object; badgeColor: string }
-  > = {
-    customer: {
-      label: activeProfile ? activeProfile.name.split(' ')[0] : t.roles.customer,
-      icon: <User size={14} color={md3.colors.secondary} />,
-      badgeStyle: styles.roleCustomer,
-      badgeColor: md3.colors.secondary,
-    },
-    worker: {
-      label: activeProfile ? activeProfile.name.split(' ')[0] : t.roles.worker,
-      icon: <Wrench size={14} color={md3.colors.primary} />,
-      badgeStyle: styles.roleWorker,
-      badgeColor: md3.colors.primary,
-    },
-    cooperative: {
-      label: activeProfile ? activeProfile.name.split(' ')[0] : t.roles.cooperative,
-      icon: <Building2 size={14} color={md3.colors.tertiary} />,
-      badgeStyle: styles.roleCooperative,
-      badgeColor: md3.colors.tertiary,
-    },
-  };
-
-  const currentBadge = roleBadgeConfig[currentRole];
-
   const handleResetPress = () => {
     if (isWeb) {
       const dom = globalThis as any;
@@ -105,11 +76,18 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
   const langTriggerLabel =
     currentLang === 'en' ? 'EN' : currentLang === 'hi' ? 'हिं' : 'मरा';
+  const roleLabel = activeProfile
+    ? activeProfile.name.split(' ')[0]
+    : currentRole === 'customer'
+    ? t.roles.customer
+    : currentRole === 'worker'
+    ? t.roles.worker
+    : t.roles.cooperative;
 
   return (
     <View style={styles.header}>
+      <View style={[styles.accentRule, { backgroundColor: accent }]} />
       <View style={styles.inner}>
-        {/* Left: Rojgar Brand Name & Tagline */}
         <View style={styles.left}>
           <View style={styles.logo}>
             <Text style={styles.logoText}>R</Text>
@@ -122,119 +100,83 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           </View>
         </View>
 
-        {/* Right Actions: Clean Language Dropdown + Role Pill + Bell + Logout */}
         <View style={styles.right}>
-          {/* Language Selector Dropdown */}
           <View style={styles.langWrap} ref={langMenuRef}>
             <Pressable
               onPress={() => setShowLangMenu(!showLangMenu)}
+              accessibilityLabel="Change language"
+              accessibilityRole="button"
               style={({ pressed }) => [styles.langTrigger, pressed && styles.pressed]}
             >
-              <Globe size={12} color="#64748b" />
+              <Globe size={12} color={colors.textSecondary} />
               <Text style={styles.langTriggerText}>{langTriggerLabel}</Text>
-              <ChevronDown size={10} color="#64748b" style={styles.langChevron} />
+              <ChevronDown size={10} color={colors.textSecondary} style={styles.langChevron} />
             </Pressable>
 
             {showLangMenu && (
               <View style={styles.langMenu}>
-                <Pressable
-                  onPress={() => {
-                    onLanguageChange('en');
-                    setShowLangMenu(false);
-                  }}
-                  style={({ pressed }) => [
-                    styles.langMenuItem,
-                    currentLang === 'en' && styles.langMenuItemActive,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.langMenuText,
-                      currentLang === 'en' && styles.langMenuTextActive,
-                    ]}
-                  >
-                    English (EN)
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    onLanguageChange('hi');
-                    setShowLangMenu(false);
-                  }}
-                  style={({ pressed }) => [
-                    styles.langMenuItem,
-                    currentLang === 'hi' && styles.langMenuItemActive,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.langMenuText,
-                      currentLang === 'hi' && styles.langMenuTextActive,
-                    ]}
-                  >
-                    हिंदी (HI)
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    onLanguageChange('mr');
-                    setShowLangMenu(false);
-                  }}
-                  style={({ pressed }) => [
-                    styles.langMenuItem,
-                    currentLang === 'mr' && styles.langMenuItemActive,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.langMenuText,
-                      currentLang === 'mr' && styles.langMenuTextActive,
-                    ]}
-                  >
-                    मराठी (MR)
-                  </Text>
-                </Pressable>
+                {(
+                  [
+                    { key: 'en' as AppLanguage, label: 'English (EN)' },
+                    { key: 'hi' as AppLanguage, label: 'हिंदी (HI)' },
+                    { key: 'mr' as AppLanguage, label: 'मराठी (MR)' },
+                  ]
+                ).map((lang) => {
+                  const active = currentLang === lang.key;
+                  return (
+                    <Pressable
+                      key={lang.key}
+                      onPress={() => {
+                        onLanguageChange(lang.key);
+                        setShowLangMenu(false);
+                      }}
+                      style={({ pressed }) => [
+                        styles.langMenuItem,
+                        active && { backgroundColor: accentBg },
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.langMenuText,
+                          active && { color: accent, fontWeight: '700' },
+                        ]}
+                      >
+                        {lang.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             )}
           </View>
 
-          {/* Role Indicator Pill with distinct role theme */}
           <Pressable
             onPress={onOpenRoleSelect}
+            accessibilityRole="button"
+            accessibilityLabel={`Switch portal. Current: ${roleLabel}`}
             style={({ pressed }) => [
               styles.rolePill,
-              currentBadge.badgeStyle,
-              pressed && styles.rolePillPressed,
-            ]}
-          >
-            {activeProfile?.avatar ? (
-              <Image
-                source={{
-                  uri: activeProfile.avatar,
-                }}
-                style={styles.avatar}
-              />
-            ) : (
-              currentBadge.icon
-            )}
-            <Text style={[styles.rolePillLabel, { color: currentBadge.badgeColor }]} numberOfLines={1}>
-              {currentBadge.label}
-            </Text>
-            <ChevronDown size={10} color={currentBadge.badgeColor} style={styles.roleChevron} />
-          </Pressable>
-
-          {/* Notifications Bell */}
-          <Pressable
-            onPress={onOpenNotifications}
-            style={({ pressed }) => [
-              styles.iconBtn,
+              { backgroundColor: accentBg, borderColor: accent + '55' },
               pressed && styles.pressed,
             ]}
           >
-            <Bell size={16} color="#475569" />
+            {activeProfile?.avatar ? (
+              <Image source={{ uri: activeProfile.avatar }} style={styles.avatar} />
+            ) : null}
+            <Text style={[styles.rolePillLabel, { color: accent }]} numberOfLines={1}>
+              {roleLabel}
+            </Text>
+            <ChevronDown size={10} color={accent} style={styles.roleChevron} />
+          </Pressable>
+
+          <Pressable
+            onPress={onOpenNotifications}
+            accessibilityRole="button"
+            accessibilityLabel={`Notifications, ${unreadNotificationsCount} unread`}
+            style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
+          >
+            <Bell size={16} color={colors.slate600} />
             {unreadNotificationsCount > 0 && (
               <View style={styles.bellBadge}>
                 <Text style={styles.bellBadgeText}>{unreadNotificationsCount}</Text>
@@ -242,20 +184,22 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             )}
           </Pressable>
 
-          {/* Switch Profile / Logout Button */}
           <Pressable
             onPress={onLogout}
+            accessibilityRole="button"
+            accessibilityLabel="Log out"
             style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
           >
-            <LogOut size={14} color="#94a3b8" />
+            <LogOut size={14} color={colors.textMuted} />
           </Pressable>
 
-          {/* Reset Demo Button */}
           <Pressable
             onPress={handleResetPress}
+            accessibilityRole="button"
+            accessibilityLabel="Reset demo data"
             style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
           >
-            <RotateCcw size={12} color="#94a3b8" />
+            <RotateCcw size={12} color={colors.textMuted} />
           </Pressable>
         </View>
       </View>
@@ -265,42 +209,42 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(226,232,240,0.9)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 2,
+    borderBottomColor: colors.border,
+    overflow: 'hidden',
+  },
+  accentRule: {
+    height: 3,
+    width: '100%',
   },
   inner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   left: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     flexShrink: 1,
     minWidth: 0,
   },
   logo: {
     width: 28,
     height: 28,
-    borderRadius: 8,
-    backgroundColor: 'md3.colors.primary',
+    borderRadius: radius.control,
+    backgroundColor: colors.emerald,
     alignItems: 'center',
     justifyContent: 'center',
   },
   logoText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '900',
+    color: colors.white,
+    fontSize: fontSize.sm,
+    fontWeight: '800',
   },
   brandCol: {
     flexDirection: 'column',
@@ -308,19 +252,17 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   brandName: {
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: -0.4,
-    color: '#0f172a',
+    fontSize: fontSize.sm,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+    color: colors.textPrimary,
     lineHeight: 18,
   },
   brandTagline: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '500',
-    color: '#64748b',
-    letterSpacing: -0.2,
-    lineHeight: 11,
-    marginTop: 2,
+    color: colors.textSecondary,
+    lineHeight: 13,
   },
   right: {
     flexDirection: 'row',
@@ -336,18 +278,19 @@ const styles = StyleSheet.create({
   langTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: 3,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
+    paddingVertical: 6,
+    borderRadius: radius.control,
+    backgroundColor: colors.slate50,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
+    minHeight: 32,
   },
   langTriggerText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#334155',
+    color: colors.slate700,
   },
   langChevron: {
     opacity: 0.6,
@@ -355,15 +298,15 @@ const styles = StyleSheet.create({
   langMenu: {
     position: 'absolute',
     right: 0,
-    top: 34,
-    width: 112,
-    backgroundColor: '#ffffff',
+    top: 36,
+    width: 128,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
+    borderColor: colors.border,
+    borderRadius: radius.card,
     paddingVertical: 4,
     zIndex: 50,
-    shadowColor: '#0f172a',
+    shadowColor: colors.slate900,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -371,86 +314,71 @@ const styles = StyleSheet.create({
   },
   langMenuItem: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  langMenuItemActive: {
-    backgroundColor: '#ecfdf5',
+    paddingVertical: 8,
   },
   langMenuText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '500',
-    color: '#334155',
-  },
-  langMenuTextActive: {
-    color: 'md3.colors.tertiary',
-    fontWeight: '700',
+    color: colors.slate700,
   },
   rolePill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
+    paddingVertical: 5,
+    borderRadius: radius.full,
     borderWidth: 1,
     maxWidth: 120,
-  },
-  roleCustomer: {
-    backgroundColor: '#eff6ff',
-    borderColor: '#bfdbfe',
-  },
-  roleWorker: {
-    backgroundColor: '#ecfdf5',
-    borderColor: '#a7f3d0',
-  },
-  roleCooperative: {
-    backgroundColor: '#f5f3ff',
-    borderColor: '#e9d5ff',
+    minHeight: 32,
   },
   rolePillPressed: {
     opacity: 0.85,
-    transform: [{ scale: 0.97 }],
   },
   rolePillLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     flexShrink: 1,
-    maxWidth: 65,
+    maxWidth: 70,
   },
   roleChevron: {
-    opacity: 0.6,
+    opacity: 0.7,
   },
   avatar: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
   },
   iconBtn: {
-    padding: 6,
-    borderRadius: 999,
+    padding: 7,
+    borderRadius: radius.full,
     position: 'relative',
+    minWidth: 32,
+    minHeight: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pressed: {
     opacity: 0.7,
   },
   bellBadge: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    top: 2,
+    right: 2,
     minWidth: 14,
     height: 14,
     paddingHorizontal: 2,
     borderRadius: 7,
-    backgroundColor: '#e11d48',
-    borderWidth: 1,
-    borderColor: '#ffffff',
+    backgroundColor: colors.error,
+    borderWidth: 1.5,
+    borderColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   bellBadgeText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 9,
-    fontWeight: '900',
+    fontWeight: '800',
     textAlign: 'center',
     lineHeight: 11,
   },

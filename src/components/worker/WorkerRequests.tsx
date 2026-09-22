@@ -6,7 +6,6 @@ import {
   IndianRupee,
   CheckCircle,
   XCircle,
-  Sparkles,
   UserCheck,
   Calendar,
   AlertTriangle,
@@ -18,6 +17,8 @@ import {
   getLocalizedSlot,
   getLocalizedTask,
 } from '../../data/mobileTranslations';
+import { Badge, Button, Card, EmptyState, PrimaryButton, ToneBadge } from '../../ui';
+import { colors, radius, spacing, fontSize, roleAccent } from '../../theme';
 
 interface WorkerRequestsProps {
   bookings: Booking[];
@@ -25,6 +26,8 @@ interface WorkerRequestsProps {
   onUpdateBookingStatus: (bookingId: string, status: BookingStatus) => void;
   onSimulateNewRequest: () => void;
 }
+
+const accent = roleAccent.worker;
 
 export const WorkerRequests: React.FC<WorkerRequestsProps> = ({
   bookings,
@@ -34,7 +37,6 @@ export const WorkerRequests: React.FC<WorkerRequestsProps> = ({
 }) => {
   const t = mobileTranslations[currentLang];
 
-  // Pending requests for Ramesh Jadhav or unassigned
   const pendingRequests = bookings.filter(
     (b) =>
       (b.workerId === 'w1' ||
@@ -43,7 +45,6 @@ export const WorkerRequests: React.FC<WorkerRequestsProps> = ({
       b.status === 'requested'
   );
 
-  // Simulated countdown clock for the top request (default 245s / ~4 min)
   const [secondsRemaining, setSecondsRemaining] = useState<number>(245);
 
   useEffect(() => {
@@ -61,51 +62,51 @@ export const WorkerRequests: React.FC<WorkerRequestsProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Header Banner - Responsive and collision-free */}
-      <View style={styles.headerCard}>
+      <Card style={styles.headerCard}>
         <View style={styles.headerRow}>
           <View style={styles.headerTitleWrap}>
             <View style={styles.titleRow}>
               <Text style={styles.headerTitle}>{t.worker.requests.title}</Text>
-              <View style={styles.pendingBadge}>
-                <Text style={styles.pendingBadgeText}>
-                  {pendingRequests.length} {t.worker.requests.pendingCount}
-                </Text>
-              </View>
+              <Badge color={colors.successFg} bg={colors.successLight}>
+                {pendingRequests.length} {t.worker.requests.pendingCount}
+              </Badge>
             </View>
             <Text style={styles.windowSubtitle}>{t.worker.requests.windowSubtitle}</Text>
           </View>
 
-          <Pressable
+          <Button
+            variant="outline"
+            color={accent}
             onPress={onSimulateNewRequest}
-            style={({ pressed }) => [styles.simulateBtn, pressed && styles.pressedDim]}
           >
-            <Sparkles size={14} color="#059669" />
-            <Text style={styles.simulateBtnText}>+ {t.worker.requests.simulateRequestBtn}</Text>
-          </Pressable>
+            + {t.worker.requests.simulateRequestBtn}
+          </Button>
         </View>
-      </View>
+      </Card>
 
       {pendingRequests.length === 0 ? (
-        <View style={styles.emptyCard}>
-          <View style={styles.emptyIconWrap}>
-            <UserCheck size={24} color="#059669" />
-          </View>
-          <Text style={styles.emptyTitle}>{t.worker.requests.emptyRequests}</Text>
-          <Pressable
-            onPress={onSimulateNewRequest}
-            style={({ pressed }) => [styles.emptyActionBtn, pressed && styles.pressedDim]}
-          >
-            <Sparkles size={16} color="#ffffff" />
-            <Text style={styles.emptyActionBtnText}>{t.worker.requests.simulateRequestBtn}</Text>
-          </Pressable>
-        </View>
+        <Card>
+          <EmptyState
+            icon={
+              <View style={styles.emptyIconWrap}>
+                <UserCheck size={24} color={accent} />
+              </View>
+            }
+            title={t.worker.requests.emptyRequests}
+            action={
+              <PrimaryButton
+                label={t.worker.requests.simulateRequestBtn}
+                color={accent}
+                onPress={onSimulateNewRequest}
+              />
+            }
+          />
+        </Card>
       ) : (
         <View style={styles.requestList}>
           {pendingRequests.map((req) => {
             return (
-              <View key={req.id} style={styles.requestCard}>
-                {/* Urgent Countdown Strip */}
+              <Card key={req.id} style={[styles.requestCard, { borderColor: accent }]}>
                 <View
                   style={[
                     styles.countdownStrip,
@@ -113,7 +114,7 @@ export const WorkerRequests: React.FC<WorkerRequestsProps> = ({
                   ]}
                 >
                   <View style={styles.countdownLeft}>
-                    <Clock size={16} color={isUrgent ? '#e11d48' : '#d97706'} />
+                    <Clock size={16} color={isUrgent ? colors.error : colors.warningFg} />
                     <Text
                       style={[
                         styles.countdownLabel,
@@ -133,15 +134,16 @@ export const WorkerRequests: React.FC<WorkerRequestsProps> = ({
                   </Text>
                 </View>
 
-                {/* Emergency Tag if applicable */}
                 {req.isEmergency && (
                   <View style={styles.emergencyTag}>
-                    <AlertTriangle size={14} color="#e11d48" />
-                    <Text style={styles.emergencyTagText}>{t.worker.requests.immediateRequest}</Text>
+                    <AlertTriangle size={14} color={colors.error} />
+                    <ToneBadge
+                      tone={{ fg: colors.errorFg, bg: colors.errorLight }}
+                      label={t.worker.requests.immediateRequest}
+                    />
                   </View>
                 )}
 
-                {/* Request Details */}
                 <View>
                   <View style={styles.reqHeaderRow}>
                     <View style={styles.reqHeaderLeft}>
@@ -152,7 +154,7 @@ export const WorkerRequests: React.FC<WorkerRequestsProps> = ({
                     </View>
                     <View style={styles.reqHeaderRight}>
                       <View style={styles.payoutRow}>
-                        <IndianRupee size={14} color="#047857" />
+                        <IndianRupee size={14} color={colors.emeraldDark} />
                         <Text style={styles.payoutValue}>{req.workerPayout}</Text>
                       </View>
                       <Text style={styles.directCreditLabel}>{t.worker.requests.directCredit}</Text>
@@ -162,22 +164,21 @@ export const WorkerRequests: React.FC<WorkerRequestsProps> = ({
                   <View style={styles.infoBox}>
                     <View style={styles.infoRowBetween}>
                       <Text style={styles.customerName}>{req.customerName}</Text>
-                      <View style={styles.localityPill}>
-                        <Text style={styles.localityPillText}>{req.locality}</Text>
-                      </View>
+                      <Badge color={colors.slate700} bg={colors.slate100}>
+                        {req.locality}
+                      </Badge>
                     </View>
                     <View style={styles.infoRowStart}>
-                      <MapPin size={14} color="#94a3b8" />
+                      <MapPin size={14} color={colors.textMuted} />
                       <Text style={styles.infoText}>{req.address}</Text>
                     </View>
                     <View style={styles.infoRow}>
-                      <Calendar size={14} color="#94a3b8" />
+                      <Calendar size={14} color={colors.textMuted} />
                       <Text style={styles.infoText}>{getLocalizedSlot(req.scheduledSlot, currentLang)}</Text>
                     </View>
                   </View>
                 </View>
 
-                {/* Payout Breakdown */}
                 <View style={styles.payoutBreakdown}>
                   <View style={styles.payoutBreakdownRow}>
                     <Text style={styles.payoutTotal}>
@@ -192,25 +193,30 @@ export const WorkerRequests: React.FC<WorkerRequestsProps> = ({
                   </Text>
                 </View>
 
-                {/* Action Buttons */}
                 <View style={styles.actionRow}>
-                  <Pressable
+                  <Button
+                    variant="outline"
+                    color={colors.slate700}
+                    style={styles.actionFlex}
                     onPress={() => onUpdateBookingStatus(req.id, 'declined')}
-                    style={({ pressed }) => [styles.declineBtn, pressed && styles.pressedDim]}
                   >
-                    <XCircle size={16} color="#334155" />
-                    <Text style={styles.declineBtnText}>{t.worker.requests.declineJobBtn}</Text>
-                  </Pressable>
-                  <Pressable
+                    <View style={styles.actionBtnInner}>
+                      <XCircle size={16} color={colors.slate700} />
+                      <Text style={styles.declineBtnText}>{t.worker.requests.declineJobBtn}</Text>
+                    </View>
+                  </Button>
+                  <Button
+                    color={accent}
+                    style={styles.actionFlex}
                     onPress={() => onUpdateBookingStatus(req.id, 'accepted')}
-                    style={({ pressed }) => [styles.acceptBtn, pressed && styles.pressedDim]}
                   >
-                    <CheckCircle size={16} color="#ffffff" />
-                    <Text style={styles.acceptBtnText}>{t.worker.requests.acceptJobBtn}</Text>
-                  </Pressable>
+                    <View style={styles.actionBtnInner}>
+                      <CheckCircle size={16} color={colors.white} />
+                      <Text style={styles.acceptBtnText}>{t.worker.requests.acceptJobBtn}</Text>
+                    </View>
+                  </Button>
                 </View>
 
-                {/* Demo expiry button */}
                 <Pressable onPress={() => onUpdateBookingStatus(req.id, 'expired')}>
                   <Text style={styles.demoExpiryText}>
                     {currentLang === 'hi'
@@ -220,7 +226,7 @@ export const WorkerRequests: React.FC<WorkerRequestsProps> = ({
                       : '[Demo Control: Simulate Auto-Timeout / Expiry]'}
                   </Text>
                 </Pressable>
-              </View>
+              </Card>
             );
           })}
         </View>
@@ -232,28 +238,17 @@ export const WorkerRequests: React.FC<WorkerRequestsProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: 16,
-    paddingBottom: 20,
+    gap: spacing.lg,
   },
   headerCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 14,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    gap: spacing.sm,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.sm,
   },
   headerTitleWrap: {
     flex: 1,
@@ -266,118 +261,45 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   headerTitle: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#0f172a',
-  },
-  pendingBadge: {
-    backgroundColor: '#d1fae5',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    flexShrink: 0,
-  },
-  pendingBadgeText: {
-    color: '#065f46',
-    fontSize: 10,
-    fontWeight: '700',
+    color: colors.textPrimary,
   },
   windowSubtitle: {
-    fontSize: 11,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     marginTop: 2,
-  },
-  simulateBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#ecfdf5',
-    borderWidth: 1,
-    borderColor: '#a7f3d0',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    flexShrink: 0,
-  },
-  simulateBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#047857',
-  },
-  emptyCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    padding: 32,
-    alignItems: 'center',
-    gap: 12,
   },
   emptyIconWrap: {
     width: 48,
     height: 48,
-    borderRadius: 16,
-    backgroundColor: '#ecfdf5',
+    borderRadius: radius.card,
+    backgroundColor: colors.emeraldLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1e293b',
-    textAlign: 'center',
-  },
-  emptyActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#059669',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  emptyActionBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#ffffff',
-  },
   requestList: {
-    gap: 14,
+    gap: spacing.md,
   },
   requestCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(16,185,129,0.8)',
-    padding: 14,
-    gap: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    gap: spacing.md,
+    borderWidth: 1.5,
   },
   countdownStrip: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 10,
-    borderRadius: 12,
+    padding: spacing.sm,
+    borderRadius: radius.control,
     borderWidth: 1,
   },
   countdownUrgent: {
-    backgroundColor: '#fff1f2',
-    borderColor: '#fecdd3',
+    backgroundColor: colors.errorLight,
+    borderColor: colors.error,
   },
   countdownNormal: {
-    backgroundColor: '#fffbeb',
-    borderColor: '#fde68a',
+    backgroundColor: colors.warningLight,
+    borderColor: colors.warning,
   },
   countdownLeft: {
     flexDirection: 'row',
@@ -386,59 +308,48 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   countdownLabel: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     flexShrink: 1,
   },
   countdownUrgentText: {
-    color: '#9f1239',
+    color: colors.errorFg,
   },
   countdownNormalText: {
-    color: '#92400e',
+    color: colors.warningFg,
   },
   countdownTime: {
-    fontSize: 12,
-    fontWeight: '900',
+    fontSize: fontSize.xs,
+    fontWeight: '800',
     letterSpacing: 0.5,
   },
   emergencyTag: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#ffe4e6',
-    borderWidth: 1,
-    borderColor: '#fecdd3',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 9,
     alignSelf: 'flex-start',
-  },
-  emergencyTagText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#9f1239',
   },
   reqHeaderRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.sm,
   },
   reqHeaderLeft: {
     flex: 1,
     minWidth: 0,
   },
   reqId: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#94a3b8',
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
   reqTitle: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.textPrimary,
     lineHeight: 18,
     marginTop: 2,
   },
@@ -453,68 +364,57 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   payoutValue: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#047857',
+    fontSize: fontSize.lg,
+    fontWeight: '800',
+    color: colors.emeraldDark,
   },
   directCreditLabel: {
-    fontSize: 10,
-    color: '#94a3b8',
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
   },
   infoBox: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    padding: 10,
+    backgroundColor: colors.slate50,
+    borderRadius: radius.control,
+    padding: spacing.sm,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: colors.border,
     gap: 6,
-    marginTop: 10,
+    marginTop: spacing.sm,
   },
   infoRowBetween: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
-    gap: 4,
+    gap: spacing.xs,
   },
   customerName: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#1e293b',
-  },
-  localityPill: {
-    backgroundColor: 'rgba(226,232,240,0.8)',
-    paddingHorizontal: 8,
-    paddingVertical: 1,
-    borderRadius: 999,
-  },
-  localityPillText: {
-    fontSize: 10,
-    fontWeight: '500',
-    color: '#334155',
+    color: colors.slate800,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   infoRowStart: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 4,
+    gap: spacing.xs,
   },
   infoText: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     flex: 1,
     flexShrink: 1,
   },
   payoutBreakdown: {
-    backgroundColor: '#ecfdf5',
+    backgroundColor: colors.successLight,
     borderWidth: 1,
-    borderColor: 'rgba(167,243,208,0.6)',
-    borderRadius: 12,
-    padding: 8,
+    borderColor: colors.success,
+    borderRadius: radius.control,
+    padding: spacing.sm,
   },
   payoutBreakdownRow: {
     flexDirection: 'row',
@@ -522,72 +422,51 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   payoutTotal: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#064e3b',
+    color: colors.successFg,
     flexShrink: 1,
   },
   payoutDirect: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#047857',
+    color: colors.emeraldDark,
     flexShrink: 1,
   },
   payoutWelfare: {
-    fontSize: 10,
-    color: '#047857',
+    fontSize: fontSize.xs,
+    color: colors.emeraldDark,
     marginTop: 2,
   },
   actionRow: {
     flexDirection: 'row',
-    gap: 8,
-    paddingTop: 4,
+    gap: spacing.sm,
+    paddingTop: spacing.xs,
   },
-  declineBtn: {
+  actionFlex: {
     flex: 1,
+  },
+  actionBtnInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 10,
-    backgroundColor: '#f1f5f9',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
   },
   declineBtnText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#334155',
-  },
-  acceptBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    backgroundColor: '#059669',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    color: colors.slate700,
   },
   acceptBtnText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.white,
   },
   demoExpiryText: {
     textAlign: 'center',
-    fontSize: 10,
-    color: '#94a3b8',
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
     fontWeight: '500',
     paddingVertical: 2,
-  },
-  pressedDim: {
-    opacity: 0.7,
   },
 });

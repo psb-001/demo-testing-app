@@ -13,8 +13,6 @@ import {
   ShieldAlert,
   ShieldCheck,
   Star,
-  Sparkles,
-  ArrowRight,
   TrendingUp,
   Award,
   ChevronRight
@@ -28,6 +26,8 @@ import {
   getLocalizedTask,
   getLocalizedSlot
 } from '../../data/mobileTranslations';
+import { Badge, Button, Card, ListRow, Section } from '../../ui';
+import { colors, radius, spacing, fontSize, cardShadow, roleAccent } from '../../theme';
 
 interface CustomerHomeProps {
   customer: CustomerProfile;
@@ -36,6 +36,8 @@ interface CustomerHomeProps {
   onNavigateTab: (tab: string) => void;
   onSelectWorkerForBooking: (worker: Worker) => void;
 }
+
+const accent = roleAccent.customer;
 
 export const CustomerHome: React.FC<CustomerHomeProps> = ({
   customer,
@@ -46,20 +48,24 @@ export const CustomerHome: React.FC<CustomerHomeProps> = ({
 }) => {
   const t = mobileTranslations[currentLang];
 
-  // Find current active / pending booking if any
   const currentActiveBooking = bookings.find(
     b => b.status === 'requested' || b.status === 'accepted' || b.status === 'in_progress'
   );
 
   const topWorkers = mockWorkers.slice(0, 4);
 
+  const activeStatusLabel = currentActiveBooking
+    ? currentActiveBooking.status === 'requested'
+      ? t.customer.home.waitingWorker
+      : currentActiveBooking.status === 'accepted'
+      ? t.customer.home.workerEnRoute
+      : t.customer.home.workUnderway
+    : '';
+
   return (
     <View style={styles.root}>
 
-      {/* Top Greeting & Locality Card */}
-      <View style={styles.greetingCard}>
-        <View style={styles.decoGlow} />
-
+      <Card style={styles.greetingCard}>
         <View style={styles.greetingTop}>
           <View style={styles.greetingTextWrap}>
             <Text style={styles.greetingLabel}>{t.customer.home.greeting}</Text>
@@ -72,32 +78,25 @@ export const CustomerHome: React.FC<CustomerHomeProps> = ({
           />
         </View>
 
-        {/* Locality Selector Pill */}
         <View style={styles.localityRow}>
           <View style={styles.localityLeft}>
-            <MapPin size={14} color="#93c5fd" />
+            <MapPin size={14} color={accent} />
             <Text style={styles.localityText}>
               {t.customer.home.wardHub} <Text style={styles.localityStrong}>{customer.locality}</Text>
             </Text>
           </View>
-          <View style={styles.zonePill}>
-            <Text style={styles.zonePillText}>{t.customer.home.zone}</Text>
-          </View>
+          <Badge color={accent} bg={colors.blueLight}>
+            {t.customer.home.zone}
+          </Badge>
         </View>
-      </View>
+      </Card>
 
-      {/* Current Active Booking Banner (if present) */}
       {currentActiveBooking && (
-        <View style={styles.activeCard}>
+        <Card style={styles.activeCard}>
           <View style={styles.activeTop}>
-            <View style={styles.activeStatusPill}>
-              <View style={styles.activeDot} />
-              <Text style={styles.activeStatusText}>
-                {currentActiveBooking.status === 'requested' && t.customer.home.waitingWorker}
-                {currentActiveBooking.status === 'accepted' && t.customer.home.workerEnRoute}
-                {currentActiveBooking.status === 'in_progress' && t.customer.home.workUnderway}
-              </Text>
-            </View>
+            <Badge color={colors.infoFg} bg={colors.infoLight}>
+              {activeStatusLabel}
+            </Badge>
             <Text style={styles.activeId}>#{currentActiveBooking.id}</Text>
           </View>
 
@@ -126,26 +125,25 @@ export const CustomerHome: React.FC<CustomerHomeProps> = ({
             </View>
           </View>
 
-          <Pressable
+          <Button
+            variant="soft"
+            color={accent}
+            block
             onPress={() => onNavigateTab('bookings')}
-            style={({ pressed }) => [styles.trackBtn, pressed && styles.pressed]}
           >
-            <Text style={styles.trackBtnText}>{t.customer.home.trackStatus}</Text>
-            <ArrowRight size={14} color="#1e40af" />
-          </Pressable>
-        </View>
+            {t.customer.home.trackStatus}
+          </Button>
+        </Card>
       )}
 
-      {/* 3 Quick Action Cards */}
-      <View>
-        <Text style={styles.sectionLabel}>{t.customer.home.quickActions}</Text>
+      <Section title={t.customer.home.quickActions}>
         <View style={styles.quickRow}>
           <Pressable
             onPress={() => onNavigateTab('book')}
             style={({ pressed }) => [styles.quickCard, pressed && styles.pressed]}
           >
-            <View style={styles.quickIconWrapBlue}>
-              <Search size={20} color="#2563eb" />
+            <View style={styles.quickIconWrap}>
+              <Search size={20} color={accent} />
             </View>
             <Text style={styles.quickLabel}>{t.customer.home.bookWorker}</Text>
           </Pressable>
@@ -154,8 +152,8 @@ export const CustomerHome: React.FC<CustomerHomeProps> = ({
             onPress={() => onNavigateTab('bookings')}
             style={({ pressed }) => [styles.quickCard, pressed && styles.pressed]}
           >
-            <View style={styles.quickIconWrapBlue}>
-              <Calendar size={20} color="#1d4ed8" />
+            <View style={styles.quickIconWrap}>
+              <Calendar size={20} color={accent} />
             </View>
             <Text style={styles.quickLabel}>{t.customer.home.myBookings}</Text>
           </Pressable>
@@ -164,101 +162,101 @@ export const CustomerHome: React.FC<CustomerHomeProps> = ({
             onPress={() => onNavigateTab('support')}
             style={({ pressed }) => [styles.quickCard, pressed && styles.pressed]}
           >
-            <View style={styles.quickIconWrapAmber}>
-              <ShieldAlert size={20} color="#b45309" />
+            <View style={[styles.quickIconWrap, styles.quickIconWrapAmber]}>
+              <ShieldAlert size={20} color={colors.warningFg} />
             </View>
             <Text style={styles.quickLabel}>{t.customer.home.raiseDispute}</Text>
           </Pressable>
         </View>
-      </View>
+      </Section>
 
-      {/* Nearby Verified Worker-Owners */}
-      <View>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionLabel}>{t.customer.home.nearbyWorkers}</Text>
+      <Section
+        title={t.customer.home.nearbyWorkers}
+        action={
           <Pressable
             onPress={() => onNavigateTab('book')}
             style={({ pressed }) => [styles.viewAllBtn, pressed && styles.pressed]}
           >
             <Text style={styles.viewAllText}>{t.customer.home.viewAll}</Text>
-            <ChevronRight size={14} color="#2563eb" />
+            <ChevronRight size={14} color={accent} />
           </Pressable>
-        </View>
-
+        }
+      >
         <View style={styles.workerList}>
           {topWorkers.map((worker) => (
-            <View key={worker.id} style={styles.workerCard}>
-              <View style={styles.workerRow}>
-                <View style={styles.workerLeft}>
-                  <View style={styles.workerImgWrap}>
-                    <Image
-                      source={{ uri: worker.photo }}
-                      style={styles.workerImg}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.verifiedBadge}>
-                      <Text style={styles.verifiedText}>✓</Text>
-                    </View>
-                  </View>
-                  <View style={styles.workerInfo}>
-                    <View style={styles.workerNameRow}>
-                      <Text style={styles.workerName} numberOfLines={1}>{worker.name}</Text>
-                    </View>
-                    <Text style={styles.workerTrade} numberOfLines={1}>
-                      {getLocalizedTrade(worker.primaryTradeLabel, currentLang)}
-                    </Text>
-                    <View style={styles.workerMeta}>
-                      <View style={styles.ratingRow}>
-                        <Star size={12} color="#fbbf24" fill="#fbbf24" />
-                        <Text style={styles.ratingText}>{worker.rating}</Text>
-                      </View>
-                      <Text style={styles.metaDot}>•</Text>
-                      <Text style={styles.metaText}>
-                        {worker.etaMinutes} {t.customer.home.minsAway}
-                      </Text>
-                      <Text style={styles.metaDot}>•</Text>
-                      <Text style={styles.feeText}>₹{worker.baseVisitFee}</Text>
-                    </View>
+            <ListRow
+              key={worker.id}
+              leading={
+                <View style={styles.workerImgWrap}>
+                  <Image
+                    source={{ uri: worker.photo }}
+                    style={styles.workerImg}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.verifiedBadge}>
+                    <Text style={styles.verifiedText}>✓</Text>
                   </View>
                 </View>
-
+              }
+              title={
+                <Text style={styles.workerName} numberOfLines={1}>{worker.name}</Text>
+              }
+              subtitle={
+                <Text style={styles.workerTrade} numberOfLines={1}>
+                  {getLocalizedTrade(worker.primaryTradeLabel, currentLang)}
+                </Text>
+              }
+              meta={
+                <View style={styles.workerMeta}>
+                  <View style={styles.ratingRow}>
+                    <Star size={12} color={colors.amber} fill={colors.amber} />
+                    <Text style={styles.ratingText}>{worker.rating}</Text>
+                  </View>
+                  <Text style={styles.metaDot}>•</Text>
+                  <Text style={styles.metaText}>
+                    {worker.etaMinutes} {t.customer.home.minsAway}
+                  </Text>
+                  <Text style={styles.metaDot}>•</Text>
+                  <Text style={styles.feeText}>₹{worker.baseVisitFee}</Text>
+                </View>
+              }
+              trailing={
                 <Pressable
                   onPress={() => onSelectWorkerForBooking(worker)}
                   style={({ pressed }) => [styles.requestBtn, pressed && styles.pressed]}
                 >
                   <Text style={styles.requestBtnText}>{t.customer.home.requestBtn}</Text>
                 </Pressable>
-              </View>
-            </View>
+              }
+            />
           ))}
         </View>
-      </View>
+      </Section>
 
-      {/* Cooperative Guarantee Pill */}
-      <View style={styles.guaranteeCard}>
+      <Card style={styles.guaranteeCard}>
         <View style={styles.guaranteeHeader}>
-          <ShieldCheck size={20} color="#1d4ed8" />
+          <ShieldCheck size={20} color={accent} />
           <Text style={styles.guaranteeTitle}>{t.customer.home.guaranteeTitle}</Text>
         </View>
         <View style={styles.guaranteeGrid}>
           <View style={styles.guaranteeItem}>
-            <Award size={14} color="#1d4ed8" />
+            <Award size={14} color={accent} />
             <Text style={styles.guaranteePoint}>{t.customer.home.guaranteePoint1}</Text>
           </View>
           <View style={styles.guaranteeItem}>
-            <TrendingUp size={14} color="#1d4ed8" />
+            <TrendingUp size={14} color={accent} />
             <Text style={styles.guaranteePoint}>{t.customer.home.guaranteePoint2}</Text>
           </View>
           <View style={styles.guaranteeItem}>
-            <Sparkles size={14} color="#1d4ed8" />
+            <ShieldCheck size={14} color={accent} />
             <Text style={styles.guaranteePoint}>{t.customer.home.guaranteePoint3}</Text>
           </View>
           <View style={styles.guaranteeItem}>
-            <ShieldCheck size={14} color="#1d4ed8" />
+            <ShieldCheck size={14} color={accent} />
             <Text style={styles.guaranteePoint}>{t.customer.home.guaranteePoint4}</Text>
           </View>
         </View>
-      </View>
+      </Card>
 
     </View>
   );
@@ -267,33 +265,14 @@ export const CustomerHome: React.FC<CustomerHomeProps> = ({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    padding: 16,
-    gap: 20,
-    paddingBottom: 96,
+    gap: spacing.xl,
   },
   pressed: {
     opacity: 0.85,
-    transform: [{ scale: 0.98 }],
   },
   greetingCard: {
-    backgroundColor: '#1e3a8a',
-    borderRadius: 24,
-    padding: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  decoGlow: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 160,
-    height: 160,
-    borderRadius: 999,
-    backgroundColor: 'rgba(59,130,246,0.2)',
+    borderLeftWidth: 3,
+    borderLeftColor: accent,
   },
   greetingTop: {
     flexDirection: 'row',
@@ -304,28 +283,29 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   greetingLabel: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#bfdbfe',
+    color: colors.textSecondary,
   },
   greetingName: {
-    fontSize: 20,
-    fontWeight: '900',
+    fontSize: fontSize.xl,
+    fontWeight: '800',
     letterSpacing: -0.5,
-    color: '#ffffff',
+    color: colors.textPrimary,
+    marginTop: 2,
   },
   avatar: {
     width: 44,
     height: 44,
-    borderRadius: 999,
-    borderWidth: 2,
-    borderColor: 'rgba(147,197,253,0.6)',
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   localityRow: {
-    marginTop: 14,
-    paddingTop: 12,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(29,78,216,0.6)',
+    borderTopColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -337,224 +317,119 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   localityText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '500',
-    color: '#dbeafe',
+    color: colors.textSecondary,
   },
   localityStrong: {
     fontWeight: '700',
-  },
-  zonePill: {
-    backgroundColor: 'rgba(23,37,84,0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(37,99,235,0.4)',
-  },
-  zonePillText: {
-    fontSize: 10,
-    color: '#bfdbfe',
+    color: colors.textPrimary,
   },
   activeCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
-    gap: 12,
+    gap: spacing.md,
   },
   activeTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  activeStatusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: '#eff6ff',
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
-  },
-  activeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: '#2563eb',
-  },
-  activeStatusText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#1e40af',
-  },
   activeId: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#1e293b',
+    color: colors.slate800,
   },
   activeWorkerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.md,
   },
   activeWorkerImg: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
   activeWorkerInfo: {
     flex: 1,
     minWidth: 0,
   },
   activeWorkerName: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.textPrimary,
   },
   activeWorkerTask: {
-    fontSize: 12,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   activeWorkerMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     marginTop: 2,
   },
   activeTrade: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#1d4ed8',
+    color: accent,
   },
   activeSlot: {
-    fontSize: 11,
-    color: '#94a3b8',
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
   },
   metaDot: {
-    fontSize: 11,
-    color: '#94a3b8',
-  },
-  trackBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: '#eff6ff',
-  },
-  trackBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#1e40af',
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    color: '#94a3b8',
-    marginBottom: 10,
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
   },
   quickRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: spacing.sm,
   },
   quickCard: {
     flex: 1,
     minWidth: 0,
-    padding: 12,
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
+    padding: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
     borderWidth: 1,
-    borderColor: 'rgba(226,232,240,0.9)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    borderColor: colors.border,
+    ...cardShadow,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
-  quickIconWrapBlue: {
+  quickIconWrap: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: '#eff6ff',
+    borderRadius: radius.control,
+    backgroundColor: colors.blueLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   quickIconWrapAmber: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#fffbeb',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: colors.amberLight,
   },
   quickLabel: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#1e293b',
+    color: colors.slate800,
     textAlign: 'center',
     lineHeight: 15,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
   },
   viewAllBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
+    minHeight: 32,
   },
   viewAllText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#2563eb',
+    color: accent,
   },
   workerList: {
-    gap: 10,
-  },
-  workerCard: {
-    backgroundColor: '#ffffff',
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  workerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  workerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-    minWidth: 0,
+    gap: spacing.sm,
   },
   workerImgWrap: {
     position: 'relative',
@@ -562,9 +437,9 @@ const styles = StyleSheet.create({
   workerImg: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
   verifiedBadge: {
     position: 'absolute',
@@ -572,40 +447,32 @@ const styles = StyleSheet.create({
     right: -4,
     width: 16,
     height: 16,
-    backgroundColor: '#059669',
-    borderRadius: 999,
+    backgroundColor: colors.success,
+    borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: '#ffffff',
+    borderColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   verifiedText: {
-    color: '#ffffff',
+    color: colors.white,
     fontSize: 9,
-  },
-  workerInfo: {
-    flex: 1,
-    minWidth: 0,
-  },
-  workerNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    fontWeight: '700',
   },
   workerName: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.textPrimary,
   },
   workerTrade: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '500',
-    color: '#1d4ed8',
+    color: accent,
   },
   workerMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     marginTop: 2,
   },
   ratingRow: {
@@ -614,58 +481,50 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   ratingText: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#b45309',
+    color: colors.warningFg,
   },
   metaText: {
-    fontSize: 11,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   feeText: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#0f172a',
+    color: colors.textPrimary,
   },
   requestBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    backgroundColor: '#2563eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    borderRadius: radius.control,
+    backgroundColor: accent,
+    minHeight: 36,
+    justifyContent: 'center',
   },
   requestBtnText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.white,
   },
   guaranteeCard: {
-    padding: 16,
-    backgroundColor: '#eff6ff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(191,219,254,0.8)',
-    gap: 8,
+    gap: spacing.sm,
   },
   guaranteeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   guaranteeTitle: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.textPrimary,
   },
   guaranteeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    paddingTop: 4,
+    gap: spacing.sm,
+    paddingTop: spacing.xs,
   },
   guaranteeItem: {
     width: '48%',
@@ -674,8 +533,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   guaranteePoint: {
-    fontSize: 11,
-    color: '#475569',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     flexShrink: 1,
   },
 });

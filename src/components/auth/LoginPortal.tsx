@@ -1,37 +1,17 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
-import {
-  Building2,
-  User,
-  Wrench,
-  ArrowRight,
-  Sparkles,
-  Globe,
-  ShieldCheck,
-} from 'lucide-react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { ArrowRight, Globe, ShieldCheck } from 'lucide-react-native';
 import { UserRole, UserProfile } from '../../types';
 import { demoProfiles } from '../../data/mockAppData';
 import { AppLanguage, mobileTranslations } from '../../data/mobileTranslations';
-import { Card, Row, Chip, TextField } from '../../ui';
-import { colors, radius, fontSize, cardShadow } from '../../theme';
+import { Card, Row, Chip, TextField, PrimaryButton, Section } from '../../ui';
+import { colors, radius, fontSize, roleAccent, roleAccentLight, spacing } from '../../theme';
 
 interface LoginPortalProps {
   currentLang: AppLanguage;
   onLanguageChange: (lang: AppLanguage) => void;
   onLogin: (profile: UserProfile) => void;
 }
-
-const roleTheme: Record<UserRole, { primary: string; lightBg: string; textColor: string }> = {
-  customer: { primary: '#2563eb', lightBg: '#eff6ff', textColor: '#1d4ed8' },
-  worker: { primary: '#059669', lightBg: '#ecfdf5', textColor: '#065f46' },
-  cooperative: { primary: '#7c3aed', lightBg: '#f5f3ff', textColor: '#6b21a8' },
-};
 
 export const LoginPortal: React.FC<LoginPortalProps> = ({
   currentLang,
@@ -42,20 +22,19 @@ export const LoginPortal: React.FC<LoginPortalProps> = ({
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [selectedRole, setSelectedRole] = useState<UserRole>('customer');
 
-  // Form State
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [locality, setLocality] = useState('');
   const [trade, setTrade] = useState('electrician');
   const [coopName, setCoopName] = useState('');
 
-  // 1-Tap Demo shortcut: loads the pre-configured mock profile for the chosen role
+  const accent = roleAccent[selectedRole];
+  const accentBg = roleAccentLight[selectedRole];
+
   const handleUseDemoProfile = () => {
-    const demo = demoProfiles[selectedRole];
-    onLogin(demo);
+    onLogin(demoProfiles[selectedRole]);
   };
 
-  // Form submission: logs in / creates custom profile based on user input
   const handleSubmitForm = () => {
     const fallbackProfile = demoProfiles[selectedRole];
     const tradeLabels: Record<string, string> = {
@@ -94,12 +73,10 @@ export const LoginPortal: React.FC<LoginPortalProps> = ({
     onLogin(customProfile);
   };
 
-  const currentStyle = roleTheme[selectedRole];
-
-  const roleTabs: { key: UserRole; icon: React.ReactNode; label: string }[] = [
-    { key: 'customer', icon: <User size={16} color={selectedRole === 'customer' ? '#ffffff' : '#334155'} />, label: t.roles.customer },
-    { key: 'worker', icon: <Wrench size={16} color={selectedRole === 'worker' ? '#ffffff' : '#334155'} />, label: t.roles.worker },
-    { key: 'cooperative', icon: <Building2 size={16} color={selectedRole === 'cooperative' ? '#ffffff' : '#334155'} />, label: t.roles.cooperative },
+  const roleTabs: { key: UserRole; label: string }[] = [
+    { key: 'customer', label: t.roles.customer },
+    { key: 'worker', label: t.roles.worker },
+    { key: 'cooperative', label: t.roles.cooperative },
   ];
 
   const langTabs: { key: AppLanguage; label: string }[] = [
@@ -119,7 +96,6 @@ export const LoginPortal: React.FC<LoginPortalProps> = ({
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        {/* Top Clean App Header */}
         <Row between style={styles.topHeader}>
           <Row style={styles.brandRow}>
             <View style={styles.logoBox}>
@@ -131,15 +107,15 @@ export const LoginPortal: React.FC<LoginPortalProps> = ({
             </View>
           </Row>
 
-          {/* Language Selector */}
           <Row style={styles.langSelector}>
-            <Globe size={12} color="#94a3b8" />
+            <Globe size={12} color={colors.textMuted} />
             {langTabs.map((lang) => {
               const active = currentLang === lang.key;
               return (
                 <Pressable
                   key={lang.key}
                   onPress={() => onLanguageChange(lang.key)}
+                  accessibilityRole="button"
                   style={[styles.langTab, active && styles.langTabActive]}
                 >
                   <Text style={[styles.langTabText, active && styles.langTabTextActive]}>
@@ -151,87 +127,75 @@ export const LoginPortal: React.FC<LoginPortalProps> = ({
           </Row>
         </Row>
 
-        {/* Auth Mode Toggle: Log In vs Sign Up */}
-        <Row style={styles.authModeSwitch}>
-          <Pressable
-            onPress={() => setAuthMode('login')}
-            style={[styles.authModeTab, authMode === 'login' && styles.authModeTabActive]}
-          >
-            <Text style={[styles.authModeText, authMode === 'login' && styles.authModeTextActive]}>
-              {t.auth.loginTab}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setAuthMode('signup')}
-            style={[styles.authModeTab, authMode === 'signup' && styles.authModeTabActive]}
-          >
-            <Text style={[styles.authModeText, authMode === 'signup' && styles.authModeTextActive]}>
-              {t.auth.signupTab}
-            </Text>
-          </Pressable>
-        </Row>
+        <Text style={styles.pageTitle}>
+          {authMode === 'login' ? t.auth.loginTab : t.auth.signupTab}
+        </Text>
 
-        {/* Role Selector Tabs */}
-        <View style={styles.roleSection}>
-          <Text style={styles.roleLabel}>{t.auth.chooseRole}</Text>
+        <Section title={t.auth.chooseRole}>
           <Row style={styles.roleRow}>
             {roleTabs.map((role) => {
               const active = selectedRole === role.key;
-              const primary = roleTheme[role.key].primary;
+              const c = roleAccent[role.key];
               return (
                 <Pressable
                   key={role.key}
                   onPress={() => setSelectedRole(role.key)}
-                  style={[styles.roleTab, active && { backgroundColor: primary, borderColor: primary }]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: active }}
+                  style={[
+                    styles.roleTab,
+                    active && { backgroundColor: c, borderColor: c },
+                  ]}
                 >
-                  {role.icon}
-                  <Text
-                    numberOfLines={1}
-                    style={[styles.roleTabText, active && styles.roleTabTextActive]}
-                  >
+                  <Text numberOfLines={1} style={[styles.roleTabText, active && styles.roleTabTextActive]}>
                     {role.label}
                   </Text>
                 </Pressable>
               );
             })}
           </Row>
-        </View>
+        </Section>
 
-        {/* 1-Tap Demo Profile Shortcut Button */}
-        <Card style={styles.demoCard}>
-          <Row between style={styles.demoHeader}>
-            <Row style={styles.demoTitleRow}>
-              <Sparkles size={14} color="#f59e0b" />
-              <Text style={styles.demoTitle}>
-                {currentLang === 'hi' ? 'त्वरित मूल्यांकन पहुँच' : currentLang === 'mr' ? 'जलद मूल्यमापन प्रवेश' : 'Fast Evaluation Access'}
-              </Text>
-            </Row>
-            <Text style={[styles.roleBadge, { backgroundColor: currentStyle.lightBg, color: currentStyle.textColor }]}>
-              {selectedRole === 'customer' ? t.roles.customer : selectedRole === 'worker' ? t.roles.worker : t.roles.cooperative}
+        <View style={[styles.demoBlock, { borderColor: accent + '44', backgroundColor: accentBg }]}>
+          <Row between>
+            <Text style={[styles.demoTitle, { color: accent }]}>
+              {currentLang === 'hi'
+                ? 'त्वरित मूल्यांकन पहुँच'
+                : currentLang === 'mr'
+                ? 'जलद मूल्यमापन प्रवेश'
+                : 'Fast Evaluation Access'}
+            </Text>
+            <Text style={[styles.roleBadge, { backgroundColor: colors.surface, color: accent }]}>
+              {selectedRole === 'customer'
+                ? t.roles.customer
+                : selectedRole === 'worker'
+                ? t.roles.worker
+                : t.roles.cooperative}
             </Text>
           </Row>
 
           <Text style={styles.demoNotice}>{t.auth.quickDemoNotice}</Text>
 
-          <Pressable
+          <PrimaryButton
+            label={t.auth.useDemoBtn}
+            color={accent}
             onPress={handleUseDemoProfile}
-            style={[styles.demoBtn, { backgroundColor: currentStyle.primary }]}
-          >
-            <Text style={styles.demoBtnText}>{t.auth.useDemoBtn}</Text>
-            <ArrowRight size={14} color="#ffffff" />
-          </Pressable>
-        </Card>
+            style={styles.demoBtn}
+          />
+        </View>
 
-        {/* Or enter with custom credentials form */}
         <Row style={styles.orRow}>
           <View style={styles.orLine} />
           <Text style={styles.orText}>
-            {currentLang === 'hi' ? 'या विवरण दर्ज करें' : currentLang === 'mr' ? 'किंवा तपशील भरा' : 'or enter details'}
+            {currentLang === 'hi'
+              ? 'या विवरण दर्ज करें'
+              : currentLang === 'mr'
+              ? 'किंवा तपशील भरा'
+              : 'or enter details'}
           </Text>
           <View style={styles.orLine} />
         </Row>
 
-        {/* Auth Input Form */}
         <Card style={styles.formCard}>
           <TextField
             label={t.auth.fullName}
@@ -255,7 +219,6 @@ export const LoginPortal: React.FC<LoginPortalProps> = ({
             placeholder={t.auth.localityPlaceholder}
           />
 
-          {/* Conditional field for Worker-Owner */}
           {selectedRole === 'worker' && (
             <View>
               <Text style={styles.fieldLabel}>{t.auth.primaryTrade}</Text>
@@ -265,7 +228,7 @@ export const LoginPortal: React.FC<LoginPortalProps> = ({
                     key={item.key}
                     label={item.label}
                     selected={trade === item.key}
-                    color="#059669"
+                    color={roleAccent.worker}
                     onPress={() => setTrade(item.key)}
                   />
                 ))}
@@ -273,7 +236,6 @@ export const LoginPortal: React.FC<LoginPortalProps> = ({
             </View>
           )}
 
-          {/* Conditional field for Cooperative */}
           {selectedRole === 'cooperative' && (
             <TextField
               label={t.auth.coopName}
@@ -283,15 +245,13 @@ export const LoginPortal: React.FC<LoginPortalProps> = ({
             />
           )}
 
-          <Pressable onPress={handleSubmitForm} style={[styles.submitBtn]}>
-            <Text style={styles.submitBtnText}>
-              {authMode === 'login' ? t.auth.loginBtn : t.auth.signupBtn}
-            </Text>
-            <ArrowRight size={14} color="#ffffff" />
-          </Pressable>
+          <PrimaryButton
+            label={authMode === 'login' ? t.auth.loginBtn : t.auth.signupBtn}
+            color={colors.slate900}
+            onPress={handleSubmitForm}
+          />
         </Card>
 
-        {/* Footer Guarantee */}
         <Row style={styles.footer}>
           <ShieldCheck size={14} color={colors.emerald} />
           <Text style={styles.footerText}>
@@ -310,16 +270,16 @@ export const LoginPortal: React.FC<LoginPortalProps> = ({
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#0f172a',
-    justifyContent: 'flex-start',
+    backgroundColor: colors.background,
   },
   scrollContent: {
-    padding: 16,
-    gap: 16,
+    padding: spacing.lg,
+    gap: spacing.lg,
+    paddingBottom: 40,
   },
   topHeader: {
     alignItems: 'flex-start',
-    paddingBottom: 8,
+    paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     gap: 10,
@@ -329,89 +289,62 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   logoBox: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.md,
+    width: 36,
+    height: 36,
+    borderRadius: radius.control,
     backgroundColor: colors.emerald,
     alignItems: 'center',
     justifyContent: 'center',
   },
   logoText: {
     color: colors.white,
-    fontSize: 14,
-    fontWeight: '900',
+    fontSize: fontSize.base,
+    fontWeight: '800',
   },
   brandName: {
-    fontSize: fontSize.xl,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    color: '#f8fafc',
+    fontSize: fontSize.lg,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+    color: colors.textPrimary,
     lineHeight: 22,
   },
   tagline: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#94a3b8',
-    marginTop: 2,
+    fontSize: fontSize.xs,
+    fontWeight: '500',
+    color: colors.textSecondary,
+    marginTop: 1,
   },
   langSelector: {
     gap: 2,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     padding: 4,
   },
   langTab: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: radius.sm,
+    minHeight: 28,
+    justifyContent: 'center',
   },
   langTabActive: {
-    backgroundColor: '#059669',
+    backgroundColor: colors.emerald,
   },
   langTabText: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     color: colors.slate700,
   },
   langTabTextActive: {
     color: colors.white,
   },
-  authModeSwitch: {
-    backgroundColor: 'rgba(226,232,240,0.8)',
-    borderRadius: radius.lg,
-    padding: 4,
-    gap: 4,
-  },
-  authModeTab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: radius.md,
-    paddingHorizontal: 8,
-  },
-  authModeTabActive: {
-    backgroundColor: colors.white,
-  },
-  authModeText: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-    color: '#475569',
-  },
-  authModeTextActive: {
-    color: colors.slate900,
-  },
-  roleSection: {
-    gap: 6,
-  },
-  roleLabel: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    color: '#cbd5e1',
+  pageTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    color: colors.textPrimary,
   },
   roleRow: {
     gap: 8,
@@ -421,16 +354,16 @@ const styles = StyleSheet.create({
     minWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderRadius: radius.md,
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    borderRadius: radius.control,
     borderWidth: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderColor: colors.border,
+    minHeight: 44,
   },
   roleTabText: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     color: colors.slate700,
     textAlign: 'center',
@@ -438,50 +371,32 @@ const styles = StyleSheet.create({
   roleTabTextActive: {
     color: colors.white,
   },
-  demoCard: {
-    ...cardShadow,
-  },
-  demoHeader: {
-    gap: 8,
-  },
-  demoTitleRow: {
-    gap: 6,
-    flexShrink: 1,
+  demoBlock: {
+    borderRadius: radius.card,
+    borderWidth: 1,
+    padding: spacing.lg,
+    gap: spacing.sm,
   },
   demoTitle: {
     fontSize: fontSize.sm,
     fontWeight: '800',
-    color: colors.slate800,
     flexShrink: 1,
   },
   roleBadge: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: radius.full,
     overflow: 'hidden',
   },
   demoNotice: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     color: colors.textSecondary,
-    lineHeight: 16,
-    marginTop: 8,
+    lineHeight: 17,
   },
   demoBtn: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: radius.md,
-    marginTop: 10,
-  },
-  demoBtnText: {
-    fontSize: fontSize.sm,
-    fontWeight: '800',
-    color: colors.white,
+    marginTop: 4,
   },
   orRow: {
     gap: 12,
@@ -495,10 +410,9 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: colors.textMuted,
-    textTransform: 'uppercase',
   },
   formCard: {
-    gap: 12,
+    gap: spacing.md,
   },
   fieldLabel: {
     fontSize: fontSize.sm,
@@ -510,29 +424,14 @@ const styles = StyleSheet.create({
     gap: 8,
     flexWrap: 'wrap',
   },
-  submitBtn: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: colors.slate900,
-    paddingVertical: 10,
-    borderRadius: radius.md,
-    marginTop: 8,
-  },
-  submitBtnText: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-    color: colors.white,
-  },
   footer: {
     justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 8,
+    gap: 6,
+    paddingVertical: spacing.sm,
   },
   footerText: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     color: colors.textSecondary,
+    textAlign: 'center',
   },
 });

@@ -1,26 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Dispute } from '../../types';
-import { 
-  Scale, 
-  CheckCircle2, 
-  AlertCircle, 
-  User 
+import {
+  Scale,
+  CheckCircle2,
+  AlertCircle,
+  User
 } from 'lucide-react-native';
-import { TextField } from '../../ui';
-import { 
-  AppLanguage, 
-  mobileTranslations, 
-  getLocalizedStatus, 
-  getLocalizedTrade, 
-  getLocalizedStatement 
+import { Badge, Button, Card, EmptyState, TextField, ToneBadge } from '../../ui';
+import {
+  AppLanguage,
+  mobileTranslations,
+  getLocalizedStatus,
+  getLocalizedTrade,
+  getLocalizedStatement
 } from '../../data/mobileTranslations';
+import { colors, radius, spacing, fontSize, roleAccent } from '../../theme';
 
 interface CooperativeDisputesProps {
   disputes: Dispute[];
   onResolveDispute: (disputeId: string, resolutionNotes: string) => void;
   currentLang?: AppLanguage;
 }
+
+const accent = roleAccent.cooperative;
 
 export const CooperativeDisputes: React.FC<CooperativeDisputesProps> = ({
   disputes,
@@ -43,57 +46,58 @@ export const CooperativeDisputes: React.FC<CooperativeDisputesProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Header Banner */}
-      <View style={styles.headerBanner}>
+      <Card style={styles.headerBanner}>
         <View style={styles.headerTextWrap}>
           <View style={styles.headerTitleRow}>
-            <Scale size={16} color="#7c3aed" />
+            <Scale size={16} color={accent} />
             <Text style={styles.headerTitle}>{t.cooperative.disputes.title}</Text>
           </View>
           <Text style={styles.headerSubtitle}>{t.cooperative.disputes.subtitle}</Text>
         </View>
-        <Text style={styles.pendingBadge}>
+        <Badge color={colors.purpleDark} bg={colors.purpleLight}>
           {t.cooperative.disputes.pendingCount.replace('{count}', String(disputes.filter(d => d.status !== 'resolved').length))}
-        </Text>
-      </View>
+        </Badge>
+      </Card>
 
       {disputes.length === 0 ? (
-        <View style={styles.emptyState}>
-          <CheckCircle2 size={32} color="#10b981" />
-          <Text style={styles.emptyStateText}>{t.cooperative.disputes.noGrievances}</Text>
-        </View>
+        <Card>
+          <EmptyState
+            icon={<CheckCircle2 size={32} color={colors.success} />}
+            title={t.cooperative.disputes.noGrievances}
+          />
+        </Card>
       ) : (
         <View style={styles.disputeList}>
           {disputes.map((dispute) => {
             const isResolved = dispute.status === 'resolved';
 
             return (
-              <View key={dispute.id} style={styles.disputeCard}>
-                {/* Header */}
+              <Card key={dispute.id} style={styles.disputeCard}>
                 <View style={styles.disputeHeader}>
                   <View style={styles.disputeMain}>
                     <View style={styles.disputeIdRow}>
                       <Text style={styles.disputeId}>
                         #{dispute.id.slice(-6).toUpperCase()}
                       </Text>
-                      <Text style={[
-                        styles.statusBadge,
-                        isResolved ? styles.statusResolved : styles.statusOpen
-                      ]}>
-                        {getLocalizedStatus(dispute.status, currentLang)}
-                      </Text>
+                      <ToneBadge
+                        tone={
+                          isResolved
+                            ? { fg: colors.successFg, bg: colors.successLight }
+                            : { fg: colors.warningFg, bg: colors.warningLight }
+                        }
+                        label={getLocalizedStatus(dispute.status, currentLang)}
+                      />
                     </View>
                     <Text style={styles.disputeTitle}>
                       {getLocalizedTrade(dispute.workerTrade, currentLang)} {currentLang === 'hi' ? 'सेवा' : currentLang === 'mr' ? 'सेवा' : 'Service'}
                     </Text>
                   </View>
 
-                  <Text style={styles.createdAtChip}>
+                  <Badge color={colors.textSecondary} bg={colors.slate100}>
                     {dispute.createdAt}
-                  </Text>
+                  </Badge>
                 </View>
 
-                {/* Dispute Parties */}
                 <View style={styles.partiesBox}>
                   <View style={styles.partyCell}>
                     <Text style={styles.partyLabel}>{t.worker.jobs.customer}</Text>
@@ -105,10 +109,9 @@ export const CooperativeDisputes: React.FC<CooperativeDisputesProps> = ({
                   </View>
                 </View>
 
-                {/* Customer Complaint */}
                 <View style={styles.complaintBox}>
                   <View style={styles.boxTitleRow}>
-                    <AlertCircle size={14} color="#9f1239" />
+                    <AlertCircle size={14} color={colors.errorFg} />
                     <Text style={styles.complaintTitle}>{t.cooperative.disputes.customerComplaint}</Text>
                   </View>
                   <Text style={styles.blockquoteRose}>
@@ -116,39 +119,34 @@ export const CooperativeDisputes: React.FC<CooperativeDisputesProps> = ({
                   </Text>
                 </View>
 
-                {/* Worker Explanation */}
                 <View style={styles.statementBox}>
                   <View style={styles.boxTitleRow}>
-                    <User size={14} color="#3730a3" />
+                    <User size={14} color={colors.blueDark} />
                     <Text style={styles.statementTitle}>{t.cooperative.disputes.workerStatement}</Text>
                   </View>
-                  <Text style={styles.blockquoteIndigo}>
-                    {dispute.workerResponse 
-                      ? getLocalizedStatement(dispute.workerResponse, currentLang) 
+                  <Text style={styles.blockquoteBlue}>
+                    {dispute.workerResponse
+                      ? getLocalizedStatement(dispute.workerResponse, currentLang)
                       : (currentLang === 'hi' ? 'कारीगर-स्वामी के औपचारिक वक्तव्य की प्रतीक्षा...' : currentLang === 'mr' ? 'कामगार-मालकाच्या अधिकृत उत्तराची प्रतीक्षा...' : 'Awaiting formal statement from worker-owner...')}
                   </Text>
                 </View>
 
-                {/* Council Resolution if already resolved */}
                 {isResolved && dispute.resolutionNotes && (
                   <View style={styles.rulingBox}>
                     <View style={styles.boxTitleRow}>
-                      <CheckCircle2 size={14} color="#065f46" />
+                      <CheckCircle2 size={14} color={colors.successFg} />
                       <Text style={styles.rulingTitle}>{t.cooperative.disputes.councilRuling}</Text>
                     </View>
-                    <Text style={styles.blockquoteEmerald}>
+                    <Text style={styles.blockquoteGreen}>
                       {getLocalizedStatement(dispute.resolutionNotes, currentLang)}
                     </Text>
                   </View>
                 )}
 
-                {/* Council Resolution Controls if not resolved */}
                 {!isResolved && (
                   <View style={styles.remediationWrap}>
-                    <Text style={styles.remediationLabel}>
-                      {t.cooperative.disputes.remediationLabel}
-                    </Text>
                     <TextField
+                      label={t.cooperative.disputes.remediationLabel}
                       value={resolutionTexts[dispute.id] || ''}
                       onChangeText={(text) => setResolutionTexts(prev => ({ ...prev, [dispute.id]: text }))}
                       placeholder={t.cooperative.disputes.remediationPlaceholder}
@@ -157,7 +155,9 @@ export const CooperativeDisputes: React.FC<CooperativeDisputesProps> = ({
                     />
 
                     <View style={styles.rulingActions}>
-                      <Pressable
+                      <Button
+                        color={colors.success}
+                        style={styles.rulingActionFlex}
                         onPress={() => {
                           const note = currentLang === 'hi'
                             ? 'परिषद निर्णय: सहकारी वारंटी स्वीकृत। ग्राहक को ₹0 लागत पर पुनः निरीक्षण प्रदान किया गया।'
@@ -166,12 +166,13 @@ export const CooperativeDisputes: React.FC<CooperativeDisputesProps> = ({
                             : 'Council ruling: Co-op warranty approved. Customer re-inspection completed at ₹0 cost.';
                           handleResolve(dispute.id, note);
                         }}
-                        style={styles.approveBtn}
                       >
-                        <Text style={styles.approveBtnText}>{t.cooperative.disputes.approveRemedyBtn}</Text>
-                      </Pressable>
+                        {t.cooperative.disputes.approveRemedyBtn}
+                      </Button>
 
-                      <Pressable
+                      <Button
+                        color={accent}
+                        style={styles.rulingActionFlex}
                         onPress={() => {
                           const defaultSignoff = currentLang === 'hi'
                             ? 'ग्राहक और कारीगर दोनों की सहमति से निर्णय दर्ज।'
@@ -180,14 +181,13 @@ export const CooperativeDisputes: React.FC<CooperativeDisputesProps> = ({
                             : 'Settled with mutual customer & worker sign-off.';
                           handleResolve(dispute.id, resolutionTexts[dispute.id] || defaultSignoff);
                         }}
-                        style={styles.rulingBtn}
                       >
-                        <Text style={styles.rulingBtnText}>{t.cooperative.disputes.recordRulingBtn}</Text>
-                      </Pressable>
+                        {t.cooperative.disputes.recordRulingBtn}
+                      </Button>
                     </View>
                   </View>
                 )}
-              </View>
+              </Card>
             );
           })}
         </View>
@@ -199,23 +199,15 @@ export const CooperativeDisputes: React.FC<CooperativeDisputesProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: 16,
+    gap: spacing.lg,
   },
   headerBanner: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 1,
+    gap: spacing.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: accent,
   },
   headerTextWrap: {
     flexShrink: 1,
@@ -226,63 +218,26 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   headerTitle: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.textPrimary,
   },
   headerSubtitle: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
     marginTop: 2,
   },
-  pendingBadge: {
-    fontSize: 12,
-    backgroundColor: '#f5f3ff',
-    color: '#6b21a8',
-    fontWeight: '700',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e9d5ff',
-    overflow: 'hidden',
-  },
-  emptyState: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    padding: 32,
-    alignItems: 'center',
-    gap: 8,
-  },
-  emptyStateText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748b',
-    textAlign: 'center',
-  },
   disputeList: {
-    gap: 16,
+    gap: spacing.lg,
   },
   disputeCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 16,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 1,
+    gap: spacing.md,
   },
   disputeHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.sm,
   },
   disputeMain: {
     flexShrink: 1,
@@ -290,194 +245,126 @@ const styles = StyleSheet.create({
   disputeIdRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
+    flexWrap: 'wrap',
   },
   disputeId: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#94a3b8',
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
-  statusBadge: {
-    fontSize: 10,
-    fontWeight: '700',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    overflow: 'hidden',
-  },
-  statusResolved: {
-    backgroundColor: '#d1fae5',
-    color: '#065f46',
-  },
-  statusOpen: {
-    backgroundColor: '#fef3c7',
-    color: '#92400e',
-  },
   disputeTitle: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#0f172a',
-    marginTop: 4,
-  },
-  createdAtChip: {
-    fontSize: 10,
-    backgroundColor: '#f1f5f9',
-    color: '#475569',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    fontWeight: '500',
-    overflow: 'hidden',
+    color: colors.textPrimary,
+    marginTop: spacing.xs,
   },
   partiesBox: {
     flexDirection: 'row',
-    gap: 8,
-    backgroundColor: '#f8fafc',
-    padding: 10,
-    borderRadius: 12,
+    gap: spacing.sm,
+    backgroundColor: colors.slate50,
+    padding: spacing.sm,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: colors.border,
   },
   partyCell: {
     flex: 1,
   },
   partyLabel: {
-    fontSize: 10,
-    color: '#94a3b8',
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
     fontWeight: '700',
     textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
   partyValue: {
-    fontSize: 12,
-    color: '#1e293b',
+    fontSize: fontSize.xs,
+    color: colors.slate800,
     fontWeight: '600',
     marginTop: 2,
   },
   complaintBox: {
-    backgroundColor: 'rgba(255,241,242,0.7)',
+    backgroundColor: colors.errorLight,
     borderWidth: 1,
-    borderColor: '#ffe4e6',
-    borderRadius: 12,
-    padding: 12,
+    borderColor: colors.error,
+    borderRadius: radius.control,
+    padding: spacing.md,
     gap: 6,
-    overflow: 'hidden',
   },
   statementBox: {
-    backgroundColor: 'rgba(238,242,255,0.7)',
+    backgroundColor: colors.blueLight,
     borderWidth: 1,
-    borderColor: '#e0e7ff',
-    borderRadius: 12,
-    padding: 12,
+    borderColor: colors.blue,
+    borderRadius: radius.control,
+    padding: spacing.md,
     gap: 6,
-    overflow: 'hidden',
   },
   rulingBox: {
-    backgroundColor: '#ecfdf5',
+    backgroundColor: colors.successLight,
     borderWidth: 1,
-    borderColor: '#a7f3d0',
-    borderRadius: 12,
-    padding: 12,
+    borderColor: colors.success,
+    borderRadius: radius.control,
+    padding: spacing.md,
     gap: 6,
-    overflow: 'hidden',
   },
   boxTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   complaintTitle: {
-    fontSize: 12,
-    color: '#9f1239',
+    fontSize: fontSize.xs,
+    color: colors.errorFg,
     fontWeight: '700',
   },
   statementTitle: {
-    fontSize: 12,
-    color: '#3730a3',
+    fontSize: fontSize.xs,
+    color: colors.blueDark,
     fontWeight: '700',
   },
   rulingTitle: {
-    fontSize: 12,
-    color: '#065f46',
+    fontSize: fontSize.xs,
+    color: colors.successFg,
     fontWeight: '700',
-  },
-  blockquote: {
-    fontSize: 12,
-    color: '#334155',
-    lineHeight: 18,
   },
   blockquoteRose: {
-    fontSize: 12,
-    color: '#334155',
+    fontSize: fontSize.xs,
+    color: colors.slate700,
     lineHeight: 18,
     borderLeftWidth: 2,
-    borderLeftColor: '#fda4af',
-    paddingLeft: 10,
+    borderLeftColor: colors.error,
+    paddingLeft: spacing.sm,
   },
-  blockquoteIndigo: {
-    fontSize: 12,
-    color: '#334155',
+  blockquoteBlue: {
+    fontSize: fontSize.xs,
+    color: colors.slate700,
     lineHeight: 18,
     borderLeftWidth: 2,
-    borderLeftColor: '#a5b4fc',
-    paddingLeft: 10,
+    borderLeftColor: colors.blue,
+    paddingLeft: spacing.sm,
   },
-  blockquoteEmerald: {
-    fontSize: 12,
-    color: '#334155',
+  blockquoteGreen: {
+    fontSize: fontSize.xs,
+    color: colors.slate700,
     lineHeight: 18,
     borderLeftWidth: 2,
-    borderLeftColor: '#34d399',
-    paddingLeft: 10,
+    borderLeftColor: colors.success,
+    paddingLeft: spacing.sm,
   },
   remediationWrap: {
-    gap: 8,
-    paddingTop: 4,
+    gap: spacing.sm,
+    paddingTop: spacing.xs,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-  },
-  remediationLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#334155',
+    borderTopColor: colors.border,
   },
   rulingActions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
   },
-  approveBtn: {
+  rulingActionFlex: {
     flex: 1,
-    paddingVertical: 8,
-    backgroundColor: '#059669',
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  approveBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#ffffff',
-  },
-  rulingBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    backgroundColor: '#7c3aed',
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  rulingBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#ffffff',
   },
 });
