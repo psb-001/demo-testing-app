@@ -79,6 +79,7 @@ export default function MapScreen() {
   const [locating, setLocating] = useState(false);
   const [mapLoading, setMapLoading] = useState(true);
   const [mapError, setMapError] = useState(false);
+  const [locationNotice, setLocationNotice] = useState('');
   const nearby = useMemo(() => {
     const all = filterNearby(withComputedDistance(WORKERS_LIST, userLocation), 30, 60);
     return all.filter((worker) => (trade === 'all' || worker.trade === trade) && (!emergencyOnly || worker.isEmergencyReady));
@@ -88,12 +89,29 @@ export default function MapScreen() {
 
   const useMyLocation = async () => {
     setLocating(true);
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status === 'granted') {
-      const position = await Location.getCurrentPositionAsync({});
-      setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude, label: 'My GPS location' });
+    setLocationNotice('');
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationNotice('Location permission is off. Using the Pune default.');
+        return;
+      }
+      try {
+        const position = await Location.getCurrentPositionAsync({});
+        setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude, label: 'My GPS location' });
+      } catch {
+        const lastKnown = await Location.getLastKnownPositionAsync();
+        if (lastKnown) {
+          setUserLocation({ lat: lastKnown.coords.latitude, lng: lastKnown.coords.longitude, label: 'Last known location' });
+        } else {
+          setLocationNotice('Current location is unavailable. Using the Pune default.');
+        }
+      }
+    } catch {
+      setLocationNotice('Location services are unavailable. Using the Pune default.');
+    } finally {
+      setLocating(false);
     }
-    setLocating(false);
   };
 
   const handleMessage = (event: { nativeEvent: { data: string } }) => {
@@ -125,6 +143,7 @@ export default function MapScreen() {
       />
       {mapLoading && <View style={styles.mapLoading}><ActivityIndicator color={colors.forest} /><Text style={styles.mapLoadingText}>Loading OpenStreetMap…</Text></View>}
       {mapError && <View style={styles.mapError}><Ionicons name="cloud-offline-outline" size={22} color={colors.danger} /><Text style={styles.mapErrorText}>Map tiles need an internet connection.</Text><Text style={styles.mapErrorHint}>Worker list and booking still work below.</Text></View>}
+      {locationNotice && <View style={styles.locationNotice}><Ionicons name="location-outline" size={16} color={colors.alert} /><Text style={styles.locationNoticeText}>{locationNotice}</Text></View>}
       <View style={styles.topOverlay}><View style={styles.overlayTitle}><Ionicons name="map" size={16} color={colors.forest} /><Text style={styles.overlayTitleText}>Nearby cooperative workers</Text></View><Pressable style={styles.locationButton} onPress={useMyLocation}><Ionicons name="locate" size={17} color={locating ? colors.sage : colors.forest} /></Pressable></View>
       <View style={styles.filterOverlay}><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContent}><Pressable onPress={() => setTrade('all')} style={[styles.filterChip, trade === 'all' && styles.filterChipActive]}><Text style={[styles.filterText, trade === 'all' && styles.filterTextActive]}>All trades</Text></Pressable>{trades.map((service) => <Pressable key={service.slug} onPress={() => { setTrade(service.slug); setSelected(null); }} style={[styles.filterChip, trade === service.slug && styles.filterChipActive]}><Text style={[styles.filterText, trade === service.slug && styles.filterTextActive]}>{service.name}</Text></Pressable>)}<Pressable onPress={() => { setEmergencyOnly((value) => !value); setSelected(null); }} style={[styles.filterChip, emergencyOnly && styles.filterChipAlert]}><Ionicons name="flash" size={13} color={emergencyOnly ? colors.danger : colors.sage} /><Text style={[styles.filterText, emergencyOnly && { color: colors.danger }]}>Emergency</Text></Pressable></ScrollView></View>
       {selected ? <View style={styles.preview}><View style={styles.previewHandle} /><View style={styles.previewHeader}><View><Text style={styles.previewKicker}>SELECTED WORKER</Text><Text style={styles.previewName}>{selected.name}</Text></View><Pressable onPress={() => setSelected(null)}><Ionicons name="close" size={18} color={colors.sage} /></Pressable></View><Text style={styles.previewMeta}>{selected.tradeLabel} · {formatDistance(selected.computedDistanceKm)} · {selected.area}</Text><View style={styles.previewBottom}><StatusPill label={selected.isEmergencyReady ? 'Emergency ready' : selected.availableToday ? 'Available today' : 'Busy'} tone={selected.isEmergencyReady ? 'red' : selected.availableToday ? 'green' : 'slate'} /><View style={styles.previewActions}><Pressable style={styles.previewSecondary} onPress={() => navigation.navigate('WorkerDetail', { workerId: selected.id })}><Text style={styles.previewSecondaryText}>Passport</Text></Pressable><Pressable style={styles.previewPrimary} onPress={() => navigation.navigate('Booking', { workerId: selected.id })}><Text style={styles.previewPrimaryText}>Book ₹{selected.floorPrice}</Text></Pressable></View></View></View> : <View style={styles.bottomHint}><View style={styles.hintIcon}><Ionicons name="information-circle-outline" size={18} color={colors.leaf} /></View><Text style={styles.hintText}>{nearby.length} workers shown · tap a pin to preview, book, or open a passport</Text></View>}
@@ -139,6 +158,8 @@ const styles = StyleSheet.create({
   mapError: { position: 'absolute', top: '42%', left: 24, right: 24, backgroundColor: '#FFF7F7', borderWidth: 1, borderColor: '#F2B8B8', borderRadius: 12, padding: 14, alignItems: 'center' },
   mapErrorText: { color: colors.danger, fontSize: 11, fontWeight: '800', marginTop: 6 },
   mapErrorHint: { color: colors.sage, fontSize: 10, marginTop: 3 },
+  locationNotice: { position: 'absolute', top: 112, left: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#FFF7E8', borderWidth: 1, borderColor: '#F5D08A', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8 },
+  locationNoticeText: { color: '#8A5200', fontSize: 10, fontWeight: '800', flex: 1 },
   topOverlay: { position: 'absolute', top: 12, left: 12, right: 12, backgroundColor: 'rgba(255,255,255,0.96)', borderRadius: 14, padding: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   overlayTitle: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   overlayTitleText: { color: colors.ink, fontSize: 12, fontWeight: '900' },
@@ -150,7 +171,7 @@ const styles = StyleSheet.create({
   filterChipAlert: { backgroundColor: '#FFF0F0', borderColor: '#F2B8B8' },
   filterText: { color: colors.sage, fontSize: 9, fontWeight: '800' },
   filterTextActive: { color: '#fff' },
-  preview: { position: 'absolute', left: 12, right: 12, bottom: 82, backgroundColor: '#fff', borderRadius: radius.lg, padding: 13, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 12, elevation: 7 },
+  preview: { position: 'absolute', left: 12, right: 12, bottom: 12, backgroundColor: '#fff', borderRadius: radius.lg, padding: 13, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 12, elevation: 7 },
   previewHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: '#D5DEDA', alignSelf: 'center', marginBottom: 10 },
   previewHeader: { flexDirection: 'row', justifyContent: 'space-between' },
   previewKicker: { color: colors.teal, fontSize: 9, fontWeight: '900', letterSpacing: 0.6 },
@@ -162,7 +183,7 @@ const styles = StyleSheet.create({
   previewSecondaryText: { color: colors.ink, fontSize: 10, fontWeight: '900' },
   previewPrimary: { backgroundColor: colors.cta, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
   previewPrimaryText: { color: '#fff', fontSize: 10, fontWeight: '900' },
-  bottomHint: { position: 'absolute', left: 12, right: 12, bottom: 82, backgroundColor: 'rgba(255,255,255,0.96)', borderRadius: 13, padding: 11, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  bottomHint: { position: 'absolute', left: 12, right: 12, bottom: 12, backgroundColor: 'rgba(255,255,255,0.96)', borderRadius: 13, padding: 11, flexDirection: 'row', alignItems: 'center', gap: 8 },
   hintIcon: { width: 30, height: 30, borderRadius: 10, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
   hintText: { color: colors.ink, fontSize: 10, fontWeight: '800', flex: 1, lineHeight: 15 },
 });

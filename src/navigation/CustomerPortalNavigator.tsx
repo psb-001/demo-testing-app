@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PortalAIButton, PortalTopBar } from '../components/portal';
+import { PortalTopBar } from '../components/portal';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/theme';
 import CustomerDashboardScreen from '../screens/CustomerDashboardScreen';
@@ -50,7 +50,6 @@ export function CustomerPortalNavigator() {
         <CustomerTab.Screen name="Map" component={MapScreen} options={{ tabBarLabel: 'Map', tabBarIcon: ({ color }) => <TabIcon name="map-outline" color={color} /> }} />
         <CustomerTab.Screen name="Account" component={AccountScreen} options={{ tabBarLabel: 'Account', tabBarIcon: ({ color }) => <TabIcon name="person-outline" color={color} /> }} />
       </CustomerTab.Navigator>
-      <PortalAIButton onPress={() => navigation.navigate('MainTabs', { screen: 'AI' })} />
     </View>
   );
 }

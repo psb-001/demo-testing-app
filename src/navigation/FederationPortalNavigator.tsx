@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PortalAIButton, PortalTopBar } from '../components/portal';
+import { PortalTopBar } from '../components/portal';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/theme';
 import FederationPortalScreen from '../screens/FederationPortalScreen';
@@ -30,7 +30,6 @@ export function FederationPortalNavigator() {
         <FederationTab.Screen name="Coverage" component={() => <FederationModuleScreen mode="coverage" />} options={{ tabBarLabel: 'Coverage', tabBarIcon: ({ color }) => <TabIcon name="map-outline" color={color} /> }} />
         <FederationTab.Screen name="More" component={() => <FederationModuleScreen mode="more" />} options={{ tabBarLabel: 'More', tabBarIcon: ({ color }) => <TabIcon name="ellipsis-horizontal" color={color} /> }} />
       </FederationTab.Navigator>
-      <PortalAIButton onPress={() => navigation.navigate('MainTabs', { screen: 'AI' })} />
     </View>
   );
 }

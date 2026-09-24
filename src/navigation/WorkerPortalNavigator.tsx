@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PortalAIButton, PortalTopBar } from '../components/portal';
+import { PortalTopBar } from '../components/portal';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/theme';
 import WorkerPortalScreen from '../screens/WorkerPortalScreen';
@@ -33,7 +33,6 @@ export function WorkerPortalNavigator() {
         <WorkerTab.Screen name="Earnings" component={WorkerEarningsScreen} options={{ tabBarLabel: 'Earnings', tabBarIcon: ({ color }) => <TabIcon name="wallet-outline" color={color} /> }} />
         <WorkerTab.Screen name="Account" component={AccountScreen} options={{ tabBarLabel: 'Account', tabBarIcon: ({ color }) => <TabIcon name="person-outline" color={color} /> }} />
       </WorkerTab.Navigator>
-      <PortalAIButton onPress={() => navigation.navigate('MainTabs', { screen: 'AI' })} />
     </View>
   );
 }

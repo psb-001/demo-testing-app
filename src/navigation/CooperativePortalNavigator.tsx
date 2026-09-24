@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PortalAIButton, PortalTopBar } from '../components/portal';
+import { PortalTopBar } from '../components/portal';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/theme';
 import CooperativePortalScreen from '../screens/CooperativePortalScreen';
@@ -33,7 +33,6 @@ export function CooperativePortalNavigator() {
         <CoopTab.Screen name="Payments" component={CoopPaymentsScreen} options={{ tabBarLabel: 'Payments', tabBarIcon: ({ color }) => <TabIcon name="wallet-outline" color={color} /> }} />
         <CoopTab.Screen name="More" component={CoopMoreScreen} options={{ tabBarLabel: 'More', tabBarIcon: ({ color }) => <TabIcon name="ellipsis-horizontal" color={color} /> }} />
       </CoopTab.Navigator>
-      <PortalAIButton onPress={() => navigation.navigate('MainTabs', { screen: 'AI' })} />
     </View>
   );
 }
