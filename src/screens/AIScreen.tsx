@@ -86,7 +86,7 @@ export default function AIScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}>
+    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
       <View style={styles.screen}>
         <View style={styles.bar}>
           {AI_LANGUAGES.map((l) => (
@@ -96,7 +96,7 @@ export default function AIScreen() {
           ))}
           <Text style={styles.demo}>App guide · live + fallback</Text>
         </View>
-        <ScrollView ref={scrollRef} style={styles.messages} contentContainerStyle={styles.messageContent} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" onContentSizeChange={scrollToLatest}>
+        <ScrollView ref={scrollRef} style={styles.messages} contentContainerStyle={styles.messageContent} automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" onContentSizeChange={scrollToLatest}>
           {msgs.map((m, i) => (
             <View key={i} style={[styles.bubble, m.from === 'user' ? styles.me : styles.ai]}>
               <Text style={m.from === 'user' ? { color: '#fff' } : { color: colors.ink }}>{m.text}</Text>
