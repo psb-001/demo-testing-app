@@ -636,8 +636,114 @@ export class DemoRozgarAIBackend implements AIAssistantProvider {
   }
 }
 
-/** Swap this singleton for a live backend later — no UI changes needed. */
-export const rozgarAI: AIAssistantProvider = new DemoRozgarAIBackend();
+const ANONYMOUS_LLM_URL = 'https://api.llm7.io/v1/chat/completions';
+const ANONYMOUS_LLM_MODEL = 'gpt-oss';
+const ANONYMOUS_MIN_INTERVAL_MS = 6500;
+const LIVE_ACTION_TYPES: AIPlatformActionType[] = [
+  'select-service', 'open-map', 'book-worker', 'open-register', 'open-emergency', 'open-admin', 'coop-nav', 'scroll',
+];
+let lastAnonymousRequestAt = 0;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isLiveAction(value: unknown): value is AIPlatformAction {
+  if (!isRecord(value) || typeof value.type !== 'string' || typeof value.label !== 'string') return false;
+  if (!LIVE_ACTION_TYPES.includes(value.type as AIPlatformActionType)) return false;
+  if (value.slug !== undefined && typeof value.slug !== 'string') return false;
+  if (value.targetId !== undefined && typeof value.targetId !== 'string') return false;
+  if (value.tab !== undefined && typeof value.tab !== 'string') return false;
+  return value.label.length > 0 && value.label.length <= 120;
+}
+
+function parseLiveReply(raw: string): AIAssistantReply | null {
+  const cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start < 0 || end <= start) return null;
+  try {
+    const parsed: unknown = JSON.parse(cleaned.slice(start, end + 1));
+    if (!isRecord(parsed) || typeof parsed.text !== 'string' || !parsed.text.trim()) return null;
+    const actions = Array.isArray(parsed.actions)
+      ? parsed.actions.filter(isLiveAction).slice(0, 3)
+      : undefined;
+    return {
+      text: parsed.text.trim().slice(0, 1400),
+      actions: actions && actions.length ? actions : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function buildLiveContext(ctx: AIAssistantContext, input: string): string {
+  return JSON.stringify({
+    question: input,
+    language: ctx.language,
+    role: ctx.role ?? 'guest',
+    area: ctx.userArea,
+    page: ctx.pageContext ?? null,
+    bookingsCount: ctx.bookingsCount,
+    services: ctx.serviceCatalog,
+    workerCounts: ctx.workersByTrade,
+    cooperative: ctx.coop ?? null,
+  });
+}
+
+const WORKCONNECT_SYSTEM_PROMPT = `You are Rozgar Guide, the in-app assistant for WorkConnect, a cooperative home-services marketplace.
+You are not a general chatbot. Only answer questions about using WorkConnect: customer services, worker jobs, cooperative operations, federation analytics, bookings, maps, payments, welfare, skill passports, emergency dispatch, and the available app pages.
+Use only the supplied app context. Never invent worker counts, prices, bookings, policies, locations, or availability. If data is missing, say so and explain which app action provides it.
+Keep answers short, practical, and beginner-friendly. Reply in the requested language: English, Hindi, or Marathi.
+Return JSON only with this shape: {"text":"...","actions":[{"type":"open-map","label":"Open map"}]}.
+Allowed action types: select-service, open-map, book-worker, open-register, open-emergency, open-admin, coop-nav, scroll.
+Use an action only when it helps the user navigate WorkConnect. Never return URLs, code, or actions outside the allowlist.`;
+
+export class AnonymousRozgarAIBackend implements AIAssistantProvider {
+  readonly mode = 'live' as const;
+  private readonly fallback = new DemoRozgarAIBackend();
+
+  async respond(input: string, ctx: AIAssistantContext): Promise<AIAssistantReply> {
+    const now = Date.now();
+    if (now - lastAnonymousRequestAt < ANONYMOUS_MIN_INTERVAL_MS) {
+      return this.fallback.respond(input, ctx);
+    }
+    lastAnonymousRequestAt = now;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+      const response = await fetch(ANONYMOUS_LLM_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: ANONYMOUS_LLM_MODEL,
+          temperature: 0.2,
+          max_tokens: 500,
+          messages: [
+            { role: 'system', content: WORKCONNECT_SYSTEM_PROMPT },
+            { role: 'user', content: buildLiveContext(ctx, input) },
+          ],
+        }),
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error(`Anonymous AI request failed: ${response.status}`);
+      const payload: unknown = await response.json();
+      if (!isRecord(payload) || !Array.isArray(payload.choices)) throw new Error('Anonymous AI response shape invalid');
+      const firstChoice = payload.choices[0];
+      if (!isRecord(firstChoice) || !isRecord(firstChoice.message) || typeof firstChoice.message.content !== 'string') {
+        throw new Error('Anonymous AI message missing');
+      }
+      const reply = parseLiveReply(firstChoice.message.content);
+      return reply || this.fallback.respond(input, ctx);
+    } catch {
+      return this.fallback.respond(input, ctx);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+}
+
+export const rozgarAI: AIAssistantProvider = new AnonymousRozgarAIBackend();
 
 /* ---------------- Page-aware context (subtle, same panel everywhere) ---------------- */
 

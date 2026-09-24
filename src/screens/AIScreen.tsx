@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { DemoRozgarAIBackend, AI_LANGUAGES, type AILanguage, type AIPlatformAction } from '../services/rozgarAIService';
+import { rozgarAI, AI_LANGUAGES, type AILanguage, type AIPlatformAction } from '../services/rozgarAIService';
 import { SERVICES_LIST, WORKERS_LIST } from '../data/mockData';
 import { colors, radius } from '../theme/theme';
 import { useAppState } from '../context/AppState';
 import { useAuth } from '../context/AuthContext';
 
-const backend = new DemoRozgarAIBackend();
+const backend = rozgarAI;
 
 interface Msg { from: 'user' | 'ai'; text: string; actions?: AIPlatformAction[] }
 
@@ -75,7 +75,7 @@ export default function AIScreen() {
             <Text style={[styles.langT, lang === l.code && { color: '#fff' }]}>{l.native}</Text>
           </TouchableOpacity>
         ))}
-        <Text style={styles.demo}>Demo assistant — guided help</Text>
+        <Text style={styles.demo}>App guide · anonymous AI + safe demo fallback</Text>
       </View>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 12 }}>
         {msgs.map((m, i) => (

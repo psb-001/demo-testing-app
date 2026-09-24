@@ -30,6 +30,12 @@ npx expo start
 - Native map includes trade/emergency filters, GPS location, worker previews, booking, and passport actions
 - Booking keeps the website’s date/time, emergency fee, location, payment method, booking type, and 92/8 fare split
 
+## AI guide
+- `src/services/rozgarAIService.ts` uses the WorkConnect-only anonymous LLM endpoint when available.
+- The model receives only app context and a constrained system prompt; replies are parsed and actions are allowlisted.
+- Requests time out after 8 seconds, are limited to one request every 6.5 seconds, and automatically fall back to the deterministic guided assistant.
+- No API key is stored in the app or repository. The current anonymous provider is best-effort and rate-limited by its provider.
+
 ## Web → Native mapping
 | Web | Mobile |
 |---|---|
