@@ -244,7 +244,7 @@ export default function AuthScreen() {
           ))}
         </View>
 
-        <Text style={styles.footer}>Demo authentication is stored locally on this device. No real SMS or payment is processed.</Text>
+        <Text style={styles.footer}>Demo mode · stored on this device · no real payments</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );

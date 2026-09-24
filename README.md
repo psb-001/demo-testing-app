@@ -2,13 +2,9 @@
 
 Exact mobile port of `../workconnect` website — same features, React Native UI.
 
-## Run in Expo Go
-```bash
-cd workconnect-mobile
-npm install
-npx expo start
-# Scan QR with Expo Go (Android/iOS)
-```
+## Maps
+- Expo Go uses the bundled native map for the demo.
+- For a standalone Android/iOS build, copy `.env.example` to `.env.local` and set `GOOGLE_MAPS_API_KEY`; `app.config.js` applies it to the native map config without committing the key.
 
 ## App flow
 - First launch: branded Login / Signup screen. No public homepage is shown before authentication.

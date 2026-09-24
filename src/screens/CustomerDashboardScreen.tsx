@@ -36,7 +36,7 @@ export default function CustomerDashboardScreen() {
         <View style={styles.heroCircleTwo} />
         <Text style={styles.heroKicker}>CUSTOMER HOME · {userArea.toUpperCase()}</Text>
         <Text style={styles.heroTitle}>Good to see you, {user?.name.split(' ')[0] || 'there'}.</Text>
-        <Text style={styles.heroSubtitle}>Trusted cooperative help, when your home needs it.</Text>
+        <Text style={styles.heroSubtitle}>Trusted help for your home.</Text>
         <View style={styles.searchBox}>
           <Ionicons name="search" size={17} color={colors.sage} />
           <TextInput
@@ -126,7 +126,7 @@ export default function CustomerDashboardScreen() {
       <SectionHeader title="Why WorkConnect" />
       <View style={styles.trustCard}>
         <View style={styles.trustIcon}><Ionicons name="shield-checkmark" size={22} color={colors.leaf} /></View>
-        <View style={styles.trustCopy}><Text style={styles.trustTitle}>Fair work, visible prices</Text><Text style={styles.trustBody}>Every booking is verified, insured, and split transparently: 92% to the worker, 8% to cooperative welfare.</Text></View>
+        <View style={styles.trustCopy}><Text style={styles.trustTitle}>Fair work, visible prices</Text><Text style={styles.trustBody}>92% goes to the worker. 8% supports welfare and insurance.</Text></View>
         <Ionicons name="chevron-forward" size={17} color={colors.sage} />
       </View>
       <View style={styles.demoRow}><DemoPill /><Text style={styles.demoText}>Your activity is saved on this device in demo mode.</Text></View>

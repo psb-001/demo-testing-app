@@ -19,7 +19,7 @@ export default function AIScreen() {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([
-    { from: 'ai', text: 'Namaste! I am Rozgar AI. Ask for a service, worker, price, booking, or worker help — English, हिन्दी, मराठी.' },
+    { from: 'ai', text: 'Hi! I am Rozgar Guide. Ask about services, bookings, workers, or app steps.' },
   ]);
 
   const send = async (text: string) => {
@@ -75,7 +75,7 @@ export default function AIScreen() {
             <Text style={[styles.langT, lang === l.code && { color: '#fff' }]}>{l.native}</Text>
           </TouchableOpacity>
         ))}
-        <Text style={styles.demo}>App guide · anonymous AI + safe demo fallback</Text>
+        <Text style={styles.demo}>App guide · live + fallback</Text>
       </View>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 12 }}>
         {msgs.map((m, i) => (

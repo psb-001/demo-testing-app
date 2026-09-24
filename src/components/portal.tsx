@@ -1,12 +1,42 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { WorkerProfile } from '../types';
 import { colors, radius } from '../theme/theme';
 import { jobMatchScore } from '../services/matchingService';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
+type NotificationItem = { id: string; title: string; body: string; time: string; icon: IconName };
+
+function notificationsForRole(roleLabel: string): NotificationItem[] {
+  if (roleLabel.toLowerCase().includes('worker')) {
+    return [
+      { id: 'worker-job', title: 'New job near Baner', body: 'Electrical repair · 2.1 km · ₹249 payout', time: '8 min ago', icon: 'briefcase-outline' },
+      { id: 'worker-passport', title: 'Passport verified', body: 'Your cooperative verification is active.', time: 'Today', icon: 'shield-checkmark-outline' },
+      { id: 'worker-payout', title: 'Payout processed', body: 'Your transparent invoice is ready to view.', time: 'Yesterday', icon: 'wallet-outline' },
+    ];
+  }
+  if (roleLabel.toLowerCase().includes('cooperative')) {
+    return [
+      { id: 'coop-requests', title: 'Requests need review', body: 'New service requests are waiting in the queue.', time: '5 min ago', icon: 'document-text-outline' },
+      { id: 'coop-workers', title: 'Roster update', body: 'Availability and workload data refreshed.', time: 'Today', icon: 'people-outline' },
+      { id: 'coop-payout', title: 'Payouts pending', body: 'Settlement actions are ready in Payments.', time: 'Yesterday', icon: 'wallet-outline' },
+    ];
+  }
+  if (roleLabel.toLowerCase().includes('federation')) {
+    return [
+      { id: 'fed-demand', title: 'Demand report refreshed', body: 'Area demand and skill gaps are up to date.', time: 'Today', icon: 'trending-up-outline' },
+      { id: 'fed-members', title: 'Society check-in', body: 'Member cooperative reports are available.', time: 'Yesterday', icon: 'business-outline' },
+    ];
+  }
+  return [
+    { id: 'customer-booking', title: 'Booking updates enabled', body: 'Track your service and worker in Bookings.', time: 'Now', icon: 'calendar-outline' },
+    { id: 'customer-workers', title: 'Verified workers nearby', body: 'Open the map to see cooperative help around you.', time: 'Today', icon: 'map-outline' },
+    { id: 'customer-welfare', title: 'Welfare support', body: 'Your service includes transparent worker welfare.', time: 'Always on', icon: 'heart-outline' },
+  ];
+}
 
 export function PortalTopBar({
   roleLabel,
@@ -26,9 +56,19 @@ export function PortalTopBar({
   notificationCount?: number;
 }) {
   const insets = useSafeAreaInsets();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [readNotifications, setReadNotifications] = useState<string[]>([]);
+  const notifications = notificationsForRole(roleLabel);
+  const unreadCount = readNotifications.length ? 0 : Math.max(notificationCount, notifications.length);
+  const openNotifications = () => {
+    setReadNotifications(notifications.map((item) => item.id));
+    setNotificationsOpen(true);
+    onOpenNotifications?.();
+  };
   return (
-    <View style={[styles.topBar, { paddingTop: insets.top + 10, minHeight: 64 + insets.top }]}>
-      <View style={styles.brandRow}>
+    <>
+      <View style={[styles.topBar, { paddingTop: insets.top + 10, minHeight: 64 + insets.top }]}>
+      <View style={styles.brandRow} accessible accessibilityLabel={`${userName}, ${userMeta}`}>
         <View style={styles.brandMark}><Text style={styles.brandLetter}>R</Text></View>
         <View style={styles.brandCopy}>
           <Text style={styles.brandName}>Rozgar</Text>
@@ -40,15 +80,28 @@ export function PortalTopBar({
           <Ionicons name="sparkles" size={15} color={colors.forest} />
           <Text style={styles.aiText}>Ask AI</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Open notifications" style={styles.iconButton} onPress={onOpenNotifications}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Open notifications" style={styles.iconButton} onPress={openNotifications}>
           <Ionicons name="notifications-outline" size={19} color={colors.ink} />
-          {notificationCount > 0 && <View style={styles.notificationDot}><Text style={styles.notificationText}>{notificationCount}</Text></View>}
+          {unreadCount > 0 && <View style={styles.notificationDot}><Text style={styles.notificationText}>{unreadCount}</Text></View>}
         </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="Log out" style={styles.avatarButton} onPress={() => { void onLogout(); }}>
           <Text style={styles.avatarText}>{userName.split(' ').map((part) => part[0]).join('').slice(0, 2)}</Text>
         </Pressable>
       </View>
     </View>
+      <Modal visible={notificationsOpen} transparent animationType="slide" onRequestClose={() => setNotificationsOpen(false)}>
+        <View style={styles.notificationOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setNotificationsOpen(false)} />
+          <View style={[styles.notificationSheet, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16 }]}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHeader}><View><Text style={styles.sheetTitle}>Notifications</Text><Text style={styles.sheetSubtitle}>{notifications.length} updates for this portal</Text></View><Pressable onPress={() => setNotificationsOpen(false)} style={styles.sheetClose}><Ionicons name="close" size={18} color={colors.sage} /></Pressable></View>
+            <ScrollView style={styles.notificationList} showsVerticalScrollIndicator={false}>
+              {notifications.map((item) => <View key={item.id} style={styles.notificationRow}><View style={styles.notificationIcon}><Ionicons name={item.icon} size={17} color={colors.leaf} /></View><View style={{ flex: 1 }}><Text style={styles.notificationTitle}>{item.title}</Text><Text style={styles.notificationBody}>{item.body}</Text><Text style={styles.notificationTime}>{item.time}</Text></View></View>)}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -63,7 +116,7 @@ export function PortalAIButton({ onPress }: { onPress: () => void }) {
 }
 
 export function DemoPill() {
-  return <View style={styles.demoPill}><Text style={styles.demoPillText}>DEMO DATA</Text></View>;
+  return <View style={styles.demoPill}><Text style={styles.demoPillText}>DEMO</Text></View>;
 }
 
 export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
@@ -183,6 +236,19 @@ const styles = StyleSheet.create({
   notificationText: { color: '#fff', fontSize: 9, fontWeight: '900' },
   avatarButton: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.forest, alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: '#fff', fontSize: 11, fontWeight: '900' },
+  notificationOverlay: { flex: 1, backgroundColor: 'rgba(24,50,42,0.38)', justifyContent: 'flex-end' },
+  notificationSheet: { maxHeight: '78%', backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 18 },
+  sheetHandle: { width: 38, height: 4, borderRadius: 2, backgroundColor: '#D5DEDA', alignSelf: 'center', marginBottom: 14 },
+  sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  sheetTitle: { color: colors.ink, fontSize: 18, fontWeight: '900' },
+  sheetSubtitle: { color: colors.sage, fontSize: 10, marginTop: 3 },
+  sheetClose: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.warm, alignItems: 'center', justifyContent: 'center' },
+  notificationList: { flexGrow: 0 },
+  notificationRow: { flexDirection: 'row', gap: 9, paddingVertical: 11, borderTopWidth: 1, borderTopColor: '#F0F3F1' },
+  notificationIcon: { width: 34, height: 34, borderRadius: 11, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
+  notificationTitle: { color: colors.ink, fontSize: 11, fontWeight: '900' },
+  notificationBody: { color: colors.sage, fontSize: 10, lineHeight: 15, marginTop: 3 },
+  notificationTime: { color: colors.teal, fontSize: 9, fontWeight: '800', marginTop: 4 },
   floatingAI: { position: 'absolute', right: 16, zIndex: 20, elevation: 8, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fff', borderWidth: 1, borderColor: '#B7E4C7', borderRadius: 22, paddingHorizontal: 13, paddingVertical: 10, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 8 },
   floatingAIText: { color: colors.forest, fontSize: 11, fontWeight: '900' },
   demoPill: { alignSelf: 'flex-start', borderRadius: 8, borderWidth: 1, borderColor: '#B7E4C7', backgroundColor: colors.mint, paddingHorizontal: 7, paddingVertical: 3 },
