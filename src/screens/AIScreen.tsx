@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Keyboard, KeyboardAvoidingView, Platform, View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { rozgarAI, AI_LANGUAGES, type AILanguage, type AIPlatformAction } from '../services/rozgarAIService';
 import { SERVICES_LIST, WORKERS_LIST } from '../data/mockData';
@@ -21,6 +21,24 @@ export default function AIScreen() {
   const [msgs, setMsgs] = useState<Msg[]>([
     { from: 'ai', text: 'Hi! I am Rozgar Guide. Ask about services, bookings, workers, or app steps.' },
   ]);
+  const scrollRef = useRef<ScrollView | null>(null);
+
+  const scrollToLatest = () => {
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
+  };
+
+  useEffect(() => {
+    scrollToLatest();
+  }, [busy, msgs.length]);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', scrollToLatest);
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', scrollToLatest);
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const send = async (text: string) => {
     const q = text.trim();
@@ -68,39 +86,43 @@ export default function AIScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.warm }}>
-      <View style={styles.bar}>
-        {AI_LANGUAGES.map((l) => (
-          <TouchableOpacity key={l.code} style={[styles.lang, lang === l.code && styles.on]} onPress={() => setLang(l.code)}>
-            <Text style={[styles.langT, lang === l.code && { color: '#fff' }]}>{l.native}</Text>
+    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}>
+      <View style={styles.screen}>
+        <View style={styles.bar}>
+          {AI_LANGUAGES.map((l) => (
+            <TouchableOpacity key={l.code} style={[styles.lang, lang === l.code && styles.on]} onPress={() => setLang(l.code)}>
+              <Text style={[styles.langT, lang === l.code && { color: '#fff' }]}>{l.native}</Text>
+            </TouchableOpacity>
+          ))}
+          <Text style={styles.demo}>App guide · live + fallback</Text>
+        </View>
+        <ScrollView ref={scrollRef} style={styles.messages} contentContainerStyle={styles.messageContent} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" onContentSizeChange={scrollToLatest}>
+          {msgs.map((m, i) => (
+            <View key={i} style={[styles.bubble, m.from === 'user' ? styles.me : styles.ai]}>
+              <Text style={m.from === 'user' ? { color: '#fff' } : { color: colors.ink }}>{m.text}</Text>
+              {m.actions?.map((a, j) => (
+                <TouchableOpacity key={j} style={styles.act} onPress={() => runAction(a)}>
+                  <Text style={styles.actT}>{a.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))}
+          {busy ? <Text style={styles.thinking}>Thinking…</Text> : null}
+        </ScrollView>
+        <View style={styles.inputBar}>
+          <TextInput style={styles.input} value={input} onChangeText={setInput} placeholder="Type your message…" returnKeyType="send" blurOnSubmit={false} onFocus={scrollToLatest} onSubmitEditing={() => { void send(input); }} />
+          <TouchableOpacity style={styles.send} onPress={() => { void send(input); }}>
+            <Text style={styles.sendText}>Send</Text>
           </TouchableOpacity>
-        ))}
-        <Text style={styles.demo}>App guide · live + fallback</Text>
+        </View>
       </View>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 12 }}>
-        {msgs.map((m, i) => (
-          <View key={i} style={[styles.bubble, m.from === 'user' ? styles.me : styles.ai]}>
-            <Text style={m.from === 'user' ? { color: '#fff' } : { color: colors.ink }}>{m.text}</Text>
-            {m.actions?.map((a, j) => (
-              <TouchableOpacity key={j} style={styles.act} onPress={() => runAction(a)}>
-                <Text style={styles.actT}>{a.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ))}
-        {busy ? <Text style={{ color: colors.sage, marginTop: 6 }}>Thinking…</Text> : null}
-      </ScrollView>
-      <View style={styles.inputBar}>
-        <TextInput style={styles.input} value={input} onChangeText={setInput} placeholder="Type your message…" onSubmitEditing={() => send(input)} />
-        <TouchableOpacity style={styles.send} onPress={() => send(input)}>
-          <Text style={{ color: '#fff', fontWeight: '800' }}>Send</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.warm },
+  screen: { flex: 1, backgroundColor: colors.warm },
   bar: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderColor: colors.border },
   lang: { borderWidth: 1, borderColor: colors.border, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6 },
   on: { backgroundColor: colors.forest, borderColor: colors.forest },
@@ -111,7 +133,11 @@ const styles = StyleSheet.create({
   ai: { backgroundColor: '#fff', borderWidth: 1, borderColor: colors.border, alignSelf: 'flex-start' },
   act: { marginTop: 6, backgroundColor: colors.mint, borderRadius: 8, padding: 8 },
   actT: { color: colors.forest, fontWeight: '800', fontSize: 13 },
-  inputBar: { flexDirection: 'row', gap: 8, padding: 10, backgroundColor: '#fff', borderTopWidth: 1, borderColor: colors.border },
-  input: { flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8, color: colors.ink },
-  send: { backgroundColor: colors.cta, borderRadius: 20, paddingHorizontal: 16, justifyContent: 'center' },
+  messages: { flex: 1 },
+  messageContent: { padding: 12, paddingBottom: 18 },
+  thinking: { color: colors.sage, fontSize: 11, marginTop: 6 },
+  inputBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingTop: 10, paddingBottom: 10, backgroundColor: '#fff', borderTopWidth: 1, borderColor: colors.border },
+  input: { flex: 1, minHeight: 42, borderWidth: 1, borderColor: colors.border, borderRadius: 21, paddingHorizontal: 14, paddingVertical: 9, color: colors.ink, fontSize: 13 },
+  send: { minHeight: 42, backgroundColor: colors.cta, borderRadius: 21, paddingHorizontal: 16, justifyContent: 'center' },
+  sendText: { color: '#fff', fontWeight: '800' },
 });

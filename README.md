@@ -28,7 +28,9 @@ Exact mobile port of `../workconnect` website — same features, React Native UI
 
 ## AI guide
 - `src/services/rozgarAIService.ts` uses the WorkConnect-only anonymous LLM endpoint when available.
-- The model receives only app context and a constrained system prompt; replies are parsed and actions are allowlisted.
+- It is not a model trained specifically on WorkConnect: each request sends the user message plus current role, language, service catalog, worker counts, booking count, and page context.
+- A strict system prompt limits answers to WorkConnect usage and asks for JSON containing text plus allowlisted navigation actions.
+- The mobile app validates those actions before rendering buttons; it never executes arbitrary URLs or code.
 - Requests time out after 8 seconds, are limited to one request every 6.5 seconds, and automatically fall back to the deterministic guided assistant.
 - No API key is stored in the app or repository. The current anonymous provider is best-effort and rate-limited by its provider.
 
