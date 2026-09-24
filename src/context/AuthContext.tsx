@@ -23,10 +23,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getSession().then((u) => {
-      setUser(u);
-      setLoading(false);
-    });
+    let mounted = true;
+    getSession()
+      .then((sessionUser) => {
+        if (mounted) setUser(sessionUser);
+      })
+      .catch(() => {
+        if (mounted) setUser(null);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const login = useCallback(async (phone: string, otp: string) => {

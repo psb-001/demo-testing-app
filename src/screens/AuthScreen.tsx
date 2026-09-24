@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DEMO_OTP } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 import { colors, radius } from '../theme/theme';
@@ -27,6 +28,7 @@ type AuthMode = 'login' | 'signup';
 type LoginMethod = 'otp' | 'password';
 
 export default function AuthScreen() {
+  const insets = useSafeAreaInsets();
   const { login, loginPassword, loginDemo, signup } = useAuth();
   const [mode, setMode] = useState<AuthMode>('login');
   const [method, setMethod] = useState<LoginMethod>('otp');
@@ -42,15 +44,20 @@ export default function AuthScreen() {
     if (busy) return;
     setBusy(true);
     setError('');
-    const result = method === 'otp'
-      ? await login(identifier, otp || DEMO_OTP)
-      : await loginPassword(identifier, password);
-    if (!result) {
-      setError(method === 'otp'
-        ? `No account found for ${identifier}. Use demo OTP ${DEMO_OTP}, create an account, or use a demo role below.`
-        : 'Phone/email or password is incorrect. Create an account or use a demo role below.');
+    try {
+      const result = method === 'otp'
+        ? await login(identifier, otp || DEMO_OTP)
+        : await loginPassword(identifier, password);
+      if (!result) {
+        setError(method === 'otp'
+          ? `No account found for ${identifier}. Use demo OTP ${DEMO_OTP}, create an account, or use a demo role below.`
+          : 'Phone/email or password is incorrect. Create an account or use a demo role below.');
+      }
+    } catch {
+      setError('Authentication is temporarily unavailable. Try a demo role below.');
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   };
 
   const submitSignup = async () => {
@@ -61,31 +68,42 @@ export default function AuthScreen() {
     }
     setBusy(true);
     setError('');
-    await signup({
-      name: name.trim(),
-      phone: identifier.trim(),
-      role,
-      password: password.trim() || undefined,
-      language: 'en',
-      city: 'Pune',
-    });
-    setBusy(false);
+    try {
+      await signup({
+        name: name.trim(),
+        phone: identifier.trim(),
+        role,
+        password: password.trim() || undefined,
+        language: 'en',
+        city: 'Pune',
+      });
+    } catch {
+      setError('Could not create the account. Please try again.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const submitDemo = async (demoRole: AuthRole) => {
     if (busy) return;
     setBusy(true);
     setError('');
-    await loginDemo(demoRole);
-    setBusy(false);
+    try {
+      await loginDemo(demoRole);
+    } catch {
+      setError(`Could not open the ${demoRole} demo. Please try again.`);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <KeyboardAvoidingView
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={insets.top}
     >
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 32 }]} keyboardShouldPersistTaps="handled">
         <View style={styles.brand}>
           <View style={styles.brandMark}><Text style={styles.brandMarkText}>W</Text></View>
           <Text style={styles.brandName}>WorkConnect</Text>
@@ -214,8 +232,11 @@ export default function AuthScreen() {
           {ROLE_OPTIONS.map((item) => (
             <Pressable
               key={item.key}
-              onPress={() => submitDemo(item.key)}
-              style={({ pressed }) => [styles.demoCard, pressed && styles.demoPressed]}
+              accessibilityRole="button"
+              accessibilityLabel={`Continue as ${item.label} demo`}
+              disabled={busy}
+              onPress={() => { void submitDemo(item.key); }}
+              style={({ pressed }) => [styles.demoCard, busy && styles.demoDisabled, pressed && styles.demoPressed]}
             >
               <Text style={styles.demoLabel}>Continue as {item.label}</Text>
               <Text style={styles.demoDescription}>{item.description}</Text>
@@ -231,7 +252,7 @@ export default function AuthScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.warm },
-  content: { padding: 20, paddingBottom: 40 },
+  content: { paddingHorizontal: 20, paddingBottom: 40 },
   brand: { alignItems: 'center', marginTop: 20, marginBottom: 24 },
   brandMark: { width: 62, height: 62, borderRadius: 20, backgroundColor: colors.forest, alignItems: 'center', justifyContent: 'center' },
   brandMarkText: { color: '#fff', fontSize: 30, fontWeight: '900' },
@@ -264,6 +285,7 @@ const styles = StyleSheet.create({
   demoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   demoCard: { width: '48%', backgroundColor: '#fff', borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 12 },
   demoPressed: { backgroundColor: colors.mint },
+  demoDisabled: { opacity: 0.55 },
   demoLabel: { color: colors.ink, fontSize: 12, fontWeight: '800' },
   demoDescription: { color: colors.sage, fontSize: 11, marginTop: 3, lineHeight: 15 },
   footer: { color: colors.sage, fontSize: 11, textAlign: 'center', marginTop: 24, lineHeight: 16 },

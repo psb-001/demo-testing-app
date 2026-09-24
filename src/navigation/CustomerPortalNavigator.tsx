@@ -3,7 +3,8 @@ import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
-import { PortalTopBar } from '../components/portal';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PortalAIButton, PortalTopBar } from '../components/portal';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/theme';
 import CustomerDashboardScreen from '../screens/CustomerDashboardScreen';
@@ -20,6 +21,7 @@ function TabIcon({ name, color }: { name: React.ComponentProps<typeof Ionicons>[
 
 export function CustomerPortalNavigator() {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
   return (
     <View style={{ flex: 1, backgroundColor: '#F4F6F3' }}>
@@ -37,8 +39,9 @@ export function CustomerPortalNavigator() {
           headerShown: false,
           tabBarActiveTintColor: colors.forest,
           tabBarInactiveTintColor: colors.sage,
-          tabBarLabelStyle: { fontSize: 10, fontWeight: '800', marginBottom: 3 },
-          tabBarStyle: { height: 70, paddingTop: 7, backgroundColor: '#fff', borderTopColor: colors.border },
+           tabBarLabelStyle: { fontSize: 10, fontWeight: '800' },
+           tabBarStyle: { height: 64 + insets.bottom, paddingTop: 7, paddingBottom: Math.max(insets.bottom, 7), backgroundColor: '#fff', borderTopColor: colors.border },
+           tabBarHideOnKeyboard: true,
         }}
       >
         <CustomerTab.Screen name="Home" component={CustomerDashboardScreen} options={{ tabBarLabel: 'Home', tabBarIcon: ({ color }) => <TabIcon name="home-outline" color={color} /> }} />
@@ -47,6 +50,7 @@ export function CustomerPortalNavigator() {
         <CustomerTab.Screen name="Map" component={MapScreen} options={{ tabBarLabel: 'Map', tabBarIcon: ({ color }) => <TabIcon name="map-outline" color={color} /> }} />
         <CustomerTab.Screen name="Account" component={AccountScreen} options={{ tabBarLabel: 'Account', tabBarIcon: ({ color }) => <TabIcon name="person-outline" color={color} /> }} />
       </CustomerTab.Navigator>
+      <PortalAIButton onPress={() => navigation.navigate('MainTabs', { screen: 'AI' })} />
     </View>
   );
 }

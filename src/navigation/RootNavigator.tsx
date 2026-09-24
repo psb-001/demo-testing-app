@@ -1,5 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -28,27 +30,33 @@ import { colors } from '../theme/theme';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-function TabIcon({ label }: { label: string }) {
-  const icons: Record<string, string> = { Services: '🧰', Map: '🗺️', AI: '✨', Account: '👤' };
-  return <Text style={styles.tabIcon}>{icons[label] || '•'}</Text>;
+function TabIcon({ label, color }: { label: string; color: string }) {
+  const icons: Record<string, React.ComponentProps<typeof Ionicons>['name']> = { Services: 'grid-outline', Map: 'map-outline', AI: 'sparkles-outline', Account: 'person-outline' };
+  return <Ionicons name={icons[label] || 'ellipse-outline'} size={21} color={color} />;
 }
 
 function MainTabs() {
+  const insets = useSafeAreaInsets();
   return (
-    <Tab.Navigator
-      initialRouteName="Services"
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarIcon: () => <TabIcon label={route.name} />,
-        tabBarActiveTintColor: colors.forest,
-        tabBarInactiveTintColor: colors.sage,
-      })}
-    >
-      <Tab.Screen name="Services" component={ServicesScreen} options={{ title: 'Find a service' }} />
-      <Tab.Screen name="Map" component={MapScreen} options={{ title: 'Nearby map' }} />
-      <Tab.Screen name="AI" component={AIScreen} options={{ title: 'Rozgar AI' }} />
-      <Tab.Screen name="Account" component={AccountScreen} options={{ title: 'Account' }} />
-    </Tab.Navigator>
+    <SafeAreaView style={styles.mainTabs} edges={['top']}>
+      <Tab.Navigator
+        initialRouteName="Services"
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarIcon: ({ color }) => <TabIcon label={route.name} color={color} />,
+          tabBarActiveTintColor: colors.forest,
+          tabBarInactiveTintColor: colors.sage,
+          tabBarLabelStyle: { fontSize: 10, fontWeight: '800' },
+          tabBarStyle: { height: 64 + insets.bottom, paddingTop: 7, paddingBottom: Math.max(insets.bottom, 7), backgroundColor: '#fff', borderTopColor: colors.border },
+          tabBarHideOnKeyboard: true,
+        })}
+      >
+        <Tab.Screen name="Services" component={ServicesScreen} options={{ title: 'Find a service' }} />
+        <Tab.Screen name="Map" component={MapScreen} options={{ title: 'Nearby map' }} />
+        <Tab.Screen name="AI" component={AIScreen} options={{ title: 'Rozgar AI' }} />
+        <Tab.Screen name="Account" component={AccountScreen} options={{ title: 'Account' }} />
+      </Tab.Navigator>
+    </SafeAreaView>
   );
 }
 
@@ -69,7 +77,7 @@ export default function RootNavigator() {
 
   if (!user) {
     return (
-      <NavigationContainer>
+      <NavigationContainer key="guest-auth">
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Auth" component={AuthScreen} />
         </Stack.Navigator>
@@ -80,7 +88,7 @@ export default function RootNavigator() {
   const initialRoute = portalRouteForRole(user.role);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer key={`user-${user.id}`}>
       <Stack.Navigator
         key={user.id}
         initialRouteName={initialRoute}
@@ -111,7 +119,7 @@ export default function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
-  tabIcon: { fontSize: 18 },
+  mainTabs: { flex: 1 },
   loading: { flex: 1, backgroundColor: colors.warm, alignItems: 'center', justifyContent: 'center' },
   loadingMark: { width: 62, height: 62, borderRadius: 20, backgroundColor: colors.forest, alignItems: 'center', justifyContent: 'center', marginBottom: 22 },
   loadingMarkText: { color: '#fff', fontSize: 30, fontWeight: '900' },

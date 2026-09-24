@@ -1,6 +1,7 @@
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { WorkerProfile } from '../types';
 import { colors, radius } from '../theme/theme';
 import { jobMatchScore } from '../services/matchingService';
@@ -13,38 +14,51 @@ export function PortalTopBar({
   userMeta,
   onLogout,
   onOpenAI,
+  onOpenNotifications,
   notificationCount = 3,
 }: {
   roleLabel: string;
   userName: string;
   userMeta: string;
-  onLogout: () => void;
+  onLogout: () => void | Promise<void>;
   onOpenAI: () => void;
+  onOpenNotifications?: () => void;
   notificationCount?: number;
 }) {
+  const insets = useSafeAreaInsets();
   return (
-    <View style={styles.topBar}>
+    <View style={[styles.topBar, { paddingTop: insets.top + 10, minHeight: 64 + insets.top }]}>
       <View style={styles.brandRow}>
         <View style={styles.brandMark}><Text style={styles.brandLetter}>R</Text></View>
         <View style={styles.brandCopy}>
           <Text style={styles.brandName}>Rozgar</Text>
-          <Text style={styles.roleLabel}>{roleLabel}</Text>
+          <Text style={styles.roleLabel} numberOfLines={1}>{roleLabel}</Text>
         </View>
       </View>
       <View style={styles.topActions}>
-        <Pressable onPress={onOpenAI} style={styles.aiButton}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Ask Rozgar AI" onPress={onOpenAI} style={styles.aiButton}>
           <Ionicons name="sparkles" size={15} color={colors.forest} />
-          <Text style={styles.aiText}>AI</Text>
+          <Text style={styles.aiText}>Ask AI</Text>
         </Pressable>
-        <Pressable style={styles.iconButton} onPress={onOpenAI}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Open notifications" style={styles.iconButton} onPress={onOpenNotifications}>
           <Ionicons name="notifications-outline" size={19} color={colors.ink} />
           {notificationCount > 0 && <View style={styles.notificationDot}><Text style={styles.notificationText}>{notificationCount}</Text></View>}
         </Pressable>
-        <Pressable style={styles.avatarButton} onPress={onLogout}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Log out" style={styles.avatarButton} onPress={() => { void onLogout(); }}>
           <Text style={styles.avatarText}>{userName.split(' ').map((part) => part[0]).join('').slice(0, 2)}</Text>
         </Pressable>
       </View>
     </View>
+  );
+}
+
+export function PortalAIButton({ onPress }: { onPress: () => void }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel="Ask Rozgar AI" onPress={onPress} style={[styles.floatingAI, { bottom: 78 + insets.bottom }]}>
+      <Ionicons name="sparkles" size={17} color={colors.forest} />
+      <Text style={styles.floatingAIText}>Ask AI</Text>
+    </Pressable>
   );
 }
 
@@ -169,6 +183,8 @@ const styles = StyleSheet.create({
   notificationText: { color: '#fff', fontSize: 9, fontWeight: '900' },
   avatarButton: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.forest, alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: '#fff', fontSize: 11, fontWeight: '900' },
+  floatingAI: { position: 'absolute', right: 16, zIndex: 20, elevation: 8, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fff', borderWidth: 1, borderColor: '#B7E4C7', borderRadius: 22, paddingHorizontal: 13, paddingVertical: 10, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 8 },
+  floatingAIText: { color: colors.forest, fontSize: 11, fontWeight: '900' },
   demoPill: { alignSelf: 'flex-start', borderRadius: 8, borderWidth: 1, borderColor: '#B7E4C7', backgroundColor: colors.mint, paddingHorizontal: 7, paddingVertical: 3 },
   demoPillText: { color: colors.teal, fontSize: 8, fontWeight: '900', letterSpacing: 0.7 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, marginBottom: 9 },
