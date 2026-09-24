@@ -3,8 +3,8 @@
 Exact mobile port of `../workconnect` website — same features, React Native UI.
 
 ## Maps
-- Expo Go uses the bundled native map for the demo.
-- For a standalone Android/iOS build, copy `.env.example` to `.env.local` and set `GOOGLE_MAPS_API_KEY`; `app.config.js` applies it to the native map config without committing the key.
+- The app uses open-source Leaflet with OpenStreetMap tiles inside an Expo-compatible WebView.
+- No Google Maps key or Google map provider is required; map tiles need an internet connection and remain subject to the OpenStreetMap tile usage policy.
 
 ## App flow
 - First launch: branded Login / Signup screen. No public homepage is shown before authentication.
@@ -40,8 +40,8 @@ Exact mobile port of `../workconnect` website — same features, React Native UI
 | `services/authService.ts` (localStorage) | rewritten on AsyncStorage, same API shape (async) |
 | `context/AuthContext` | async version |
 | `App.tsx` state modals + role switch | Auth gate + role-specific initial route + persistent native bottom tabs |
-| Leaflet OSM | `react-native-maps` + `expo-location` |
+| Leaflet OSM | `react-native-webview` + Leaflet + OpenStreetMap tiles |
 | Tailwind `#14532D/#2E8B57/...` | `src/theme/theme.ts` StyleSheet |
 | `BookingModal` fare 92/8 | `BookingScreen` same math |
 
-Expo Go compatible: only bundled natives (`react-native-maps`, `async-storage`, `expo-location`, `expo-font`, `@expo/vector-icons`, `safe-area`, `screens`). No custom dev client needed.
+Expo Go compatible: only bundled natives (`react-native-webview`, `async-storage`, `expo-location`, `expo-font`, `@expo/vector-icons`, `safe-area`, `screens`). No custom dev client needed.
